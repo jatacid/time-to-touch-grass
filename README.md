@@ -1,6 +1,6 @@
 # Time to Touch Grass
 
-A procedural, infinite spherical world where you can finally touch grass. Built with Three.js.
+A procedural, infinite spherical world where you can finally tell your friends that it's time to go touch grass.
 
 ## 🌿 Features
 - **Infinite Spherical World**: Walk around a small planet populated with procedural grass, trees, and clouds.
