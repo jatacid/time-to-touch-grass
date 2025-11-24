@@ -13,12 +13,18 @@ A procedural, infinite spherical world where you can finally tell your friends t
 ## 🎮 How to Play
 1. **Open the Game**: Simply open `docs/index.html` in your web browser. No server required!
 2. **Controls**:
-    - **Click** to start and lock cursor.
-    - **WASD** to move.
-    - **Mouse** to look around.
-    - **Left Click** to use your Left Hand.
-    - **Right Click** to use your Right Hand.
-    - **ESC** to pause/unlock cursor.
+    - **Desktop**:
+        - **Click** to start and lock cursor.
+        - **WASD** to move.
+        - **Mouse** to look around.
+        - **Left Click** to use your Left Hand.
+        - **Right Click** to use your Right Hand.
+        - **ESC** to pause/unlock cursor.
+    - **Mobile/Touch**:
+        - **Tap** to start.
+        - **Virtual Joystick** (lower left) to move.
+        - **Touch Right Side** of screen to interact with grass.
+        - **Tap Screen** to resume after pause.
 
 ## 🛠️ Development
 This project is built using vanilla JavaScript and Three.js. 

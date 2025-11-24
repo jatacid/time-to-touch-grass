@@ -223,6 +223,184 @@
         #custom-cursor {
             display: none;
         }
+
+        /* Virtual Joystick */
+        #joystick-container {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 120px;
+            height: 120px;
+            pointer-events: auto;
+            opacity: 0.7;
+            display: none;
+        }
+
+        #joystick-base {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            position: relative;
+            backdrop-filter: blur(5px);
+        }
+
+        #joystick-knob {
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4));
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.1s ease-out;
+        }
+
+        #touch-instructions {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            transition: opacity 0.5s;
+            display: none;
+            opacity: 1;
+        }
+
+        /* Mobile Pause Button */
+        #mobile-pause-btn {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        #mobile-pause-btn:active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-50%) scale(0.95);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 0.8rem;
+                top: 10px;
+                right: 10px;
+            }
+
+            .hud-top-left {
+                top: 10px;
+                left: 10px;
+                gap: 8px;
+            }
+
+            .score-container {
+                padding: 10px;
+            }
+
+            #score-value {
+                font-size: 1.5em;
+            }
+
+            .progress-container {
+                width: 150px;
+                padding: 8px;
+            }
+
+            .progress-label {
+                font-size: 0.7em;
+            }
+
+            .achievement-item {
+                font-size: 0.8em;
+                padding: 6px 10px;
+            }
+
+            #footer-links {
+                font-size: 10px !important;
+                bottom: 5px !important;
+                left: 5px !important;
+            }
+
+            #footer-links a {
+                margin-right: 5px !important;
+                padding: 3px 6px !important;
+            }
+
+            #joystick-container {
+                bottom: 20px;
+                left: 20px;
+                width: 100px;
+                height: 100px;
+            }
+
+            #joystick-knob {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 0.7rem;
+            }
+
+            .score-container {
+                padding: 8px;
+            }
+
+            #score-value {
+                font-size: 1.2em;
+            }
+
+            .progress-container {
+                width: 120px;
+            }
+
+            #achievements-list {
+                max-height: 200px;
+            }
+
+            #joystick-container {
+                width: 90px;
+                height: 90px;
+                bottom: 15px;
+                left: 15px;
+            }
+
+            #joystick-knob {
+                width: 35px;
+                height: 35px;
+            }
+
+            #mobile-pause-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+                top: 15px;
+            }
+        }
     </style>
     <script type="importmap">
         {
@@ -269,11 +447,29 @@
             <a href="https://github.com/jatacid/time-to-touch-grass" target="_blank" style="color: white; text-decoration: none; margin-right: 10px; text-shadow: 1px 1px 2px black;">GitHub</a>
             <a href="https://www.paypal.com/donate/?hosted_button_id=9VFG2KJ8HW6EW" target="_blank" style="background-color: #ffcc00; color: black; padding: 4px 8px; border-radius: 3px; text-decoration: none; font-weight: bold; box-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Donate</a>
         </div>
+
+        <!-- Mobile Pause Button -->
+        <button id="mobile-pause-btn">⏸</button>
+    </div>
+
+    <!-- Virtual Joystick for Mobile -->
+    <div id="joystick-container">
+        <div id="joystick-base">
+            <div id="joystick-knob"></div>
+        </div>
     </div>
 
     <div id="crosshair">+</div>
     <div id="hand-left" class="hand-cursor">✋</div>
     <div id="hand-right" class="hand-cursor">✋</div>
+
+    <!-- Touch instructions (shown on mobile) -->
+    <div id="touch-instructions">
+        <p>Tap to Start</p>
+        <p>Joystick to Move</p>
+        <p>Touch Right Side to Interact with Grass</p>
+        <p style="font-size: 0.8em; opacity: 0.7; margin-top: 10px;">Tap Screen to Resume</p>
+    </div>
 
     <div id="achievement-popup" class="hidden">
         <div class="achievement-icon">🏆</div>
@@ -682,9 +878,38 @@
 
         // --- Controls & Interaction ---
         const instructions = document.getElementById('instructions');
+        const touchInstructions = document.getElementById('touch-instructions');
         const crosshair = document.getElementById('crosshair');
         const handLeft = document.getElementById('hand-left');
         const handRight = document.getElementById('hand-right');
+
+        // Detect touch device (only show mobile controls on small screens)
+        const isTouchDevice = (('ontouchstart' in window) || (navigator.maxTouchPoints > 0)) && (window.innerWidth <= 600);
+
+        // Show appropriate instructions and joystick
+        if (isTouchDevice) {
+            instructions.style.display = 'none';
+            touchInstructions.style.display = 'block';
+            document.getElementById('joystick-container').style.display = 'block';
+            document.getElementById('mobile-pause-btn').style.display = 'flex';
+        }
+
+        // Mobile pause button handler
+        const mobilePauseBtn = document.getElementById('mobile-pause-btn');
+        mobilePauseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isLocked) {
+                // Pause game
+                isLocked = false;
+                touchInstructions.style.opacity = 1;
+                mobilePauseBtn.textContent = '▶';
+            } else {
+                // Resume game
+                isLocked = true;
+                touchInstructions.style.opacity = 0;
+                mobilePauseBtn.textContent = '⏸';
+            }
+        });
 
         // State
         const moveState = { forward: false, backward: false, left: false, right: false };
@@ -693,6 +918,13 @@
         let isRightClick = false;
         const handPosLeft = new THREE.Vector2(-0.3, -0.3);
         const handPosRight = new THREE.Vector2(0.3, -0.3);
+
+        // Touch state
+        let joystickActive = false;
+        let joystickTouchId = null;
+        const joystickCenter = new THREE.Vector2();
+        const joystickDirection = new THREE.Vector2();
+        const activeTouches = new Map(); // Track grass interaction touches
 
         // Event Listeners
         document.body.addEventListener('click', () => {
@@ -830,6 +1062,152 @@
             }
         });
 
+        // --- Touch Controls ---
+        const joystickContainer = document.getElementById('joystick-container');
+        const joystickBase = document.getElementById('joystick-base');
+        const joystickKnob = document.getElementById('joystick-knob');
+        const maxJoystickDistance = 35; // Max distance knob can move from center
+
+        // Virtual Joystick Touch Handlers
+        joystickBase.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (joystickTouchId === null) {
+                const touch = e.changedTouches[0];
+                joystickTouchId = touch.identifier;
+                joystickActive = true;
+
+                // Calculate joystick center in screen coordinates
+                const rect = joystickBase.getBoundingClientRect();
+                joystickCenter.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            }
+        }, { passive: false });
+
+        joystickBase.addEventListener('touchmove', (e) => {
+            if (!joystickActive) return;
+
+            for (let touch of e.changedTouches) {
+                if (touch.identifier === joystickTouchId) {
+                    const dx = touch.clientX - joystickCenter.x;
+                    const dy = touch.clientY - joystickCenter.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    // Clamp to max distance
+                    const clampedDistance = Math.min(distance, maxJoystickDistance);
+                    const angle = Math.atan2(dy, dx);
+
+                    // Update knob position
+                    const knobX = Math.cos(angle) * clampedDistance;
+                    const knobY = Math.sin(angle) * clampedDistance;
+                    joystickKnob.style.transform = `translate(calc(-50% + ${knobX}px), calc(-50% + ${knobY}px))`;
+
+                    // Update direction (normalized)
+                    if (distance > 5) { // Dead zone
+                        joystickDirection.set(dx / distance, dy / distance);
+
+                        // Update movement state based on direction
+                        const threshold = 0.5;
+                        moveState.forward = joystickDirection.y < -threshold;
+                        moveState.backward = joystickDirection.y > threshold;
+                        // Left/right now turns instead of strafing
+                        moveState.left = false;
+                        moveState.right = false;
+                    } else {
+                        joystickDirection.set(0, 0);
+                        moveState.forward = false;
+                        moveState.backward = false;
+                        moveState.left = false;
+                        moveState.right = false;
+                    }
+                    break;
+                }
+            }
+        }, { passive: true });
+
+        const resetJoystick = () => {
+            joystickActive = false;
+            joystickTouchId = null;
+            joystickKnob.style.transform = 'translate(-50%, -50%)';
+            joystickDirection.set(0, 0);
+            moveState.forward = false;
+            moveState.backward = false;
+            moveState.left = false;
+            moveState.right = false;
+        };
+
+        joystickBase.addEventListener('touchend', (e) => {
+            for (let touch of e.changedTouches) {
+                if (touch.identifier === joystickTouchId) {
+                    resetJoystick();
+                    break;
+                }
+            }
+        });
+
+        joystickBase.addEventListener('touchcancel', resetJoystick);
+
+        // Grass Interaction Touch Handlers (Right side of screen)
+        document.body.addEventListener('touchstart', (e) => {
+            if (!isTouchDevice) return;
+
+            // Auto-lock on first touch if not locked
+            if (!isLocked) {
+                isLocked = true;
+                touchInstructions.style.opacity = 0;
+                mobilePauseBtn.textContent = '⏸';
+                if (isTouchDevice) {
+                    crosshair.style.opacity = 0; // Hide crosshair on mobile
+                }
+            }
+
+            for (let touch of e.changedTouches) {
+                // Ignore touches on joystick and pause button
+                const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (target === joystickBase || target === joystickKnob || joystickBase.contains(target) ||
+                    target === mobilePauseBtn || mobilePauseBtn.contains(target)) {
+                    continue;
+                }
+
+                // Check if touch is on right side of screen (for grass interaction)
+                if (touch.clientX > window.innerWidth / 2) {
+                    activeTouches.set(touch.identifier, {
+                        x: touch.clientX,
+                        y: touch.clientY,
+                        isRight: true
+                    });
+                }
+            }
+        }, { passive: true });
+
+        document.body.addEventListener('touchmove', (e) => {
+            if (!isTouchDevice || !isLocked) return;
+
+            for (let touch of e.changedTouches) {
+                if (activeTouches.has(touch.identifier)) {
+                    activeTouches.set(touch.identifier, {
+                        x: touch.clientX,
+                        y: touch.clientY,
+                        isRight: activeTouches.get(touch.identifier).isRight
+                    });
+                }
+            }
+        }, { passive: true });
+
+        const removeTouches = (e) => {
+            for (let touch of e.changedTouches) {
+                activeTouches.delete(touch.identifier);
+            }
+        };
+
+        document.body.addEventListener('touchend', removeTouches, { passive: true });
+        document.body.addEventListener('touchcancel', removeTouches, { passive: true });
+
+        // Prevent context menu on long press
+        document.body.addEventListener('contextmenu', (e) => {
+            if (isTouchDevice) {
+                e.preventDefault();
+            }
+        });
+
         // --- Gamification ---
         let totalDistance = 0;
         let lastPos = new THREE.Vector3();
@@ -854,7 +1232,9 @@
 
         function updateGamification(deltaDist) {
             if (deltaDist <= 0) return;
-            if (isLeftClick || isRightClick) {
+            // Check if any hand is active (mouse or touch)
+            const touchHandActive = activeTouches.size > 0;
+            if (isLeftClick || isRightClick || touchHandActive) {
                 const multiplier = (isLeftClick && isRightClick) ? 2.0 : 1.0;
                 totalDistance += deltaDist * multiplier;
                 scoreValue.textContent = Math.floor(totalDistance) + 'm';
@@ -964,6 +1344,12 @@
                     }
                 }
 
+                // --- Joystick Turning Logic ---
+                if (isTouchDevice && joystickActive && Math.abs(joystickDirection.x) > 0.3) {
+                    const turnSpeed = 2.0 * delta; // Adjust turn speed
+                    playerGroup.rotateY(-joystickDirection.x * turnSpeed);
+                }
+
                 // --- Orientation Logic (Gravity) ---
                 const currentUp = playerGroup.up.clone();
                 const targetUp = playerGroup.position.clone().normalize();
@@ -1006,6 +1392,43 @@
                     }
                 } else {
                     grassMaterial.uniforms.hand2Active.value = 0.0;
+                }
+
+                // --- Hand Logic (Touch) ---
+                // Process active touches for grass interaction
+                let touchHandActive = false;
+                for (let [touchId, touchData] of activeTouches) {
+                    if (touchData.isRight) {
+                        touchHandActive = true;
+
+                        // Convert screen coordinates to normalized device coordinates
+                        const ndcX = (touchData.x / window.innerWidth) * 2 - 1;
+                        const ndcY = -(touchData.y / window.innerHeight) * 2 + 1;
+                        const touchNDC = new THREE.Vector2(ndcX, ndcY);
+
+                        // Show hand at touch position
+                        handRight.style.left = touchData.x + 'px';
+                        handRight.style.top = touchData.y + 'px';
+                        handRight.classList.add('active');
+
+                        // Raycast to find grass interaction point
+                        raycaster.setFromCamera(touchNDC, camera);
+                        const intersects = raycaster.intersectObject(ground);
+                        if (intersects.length > 0) {
+                            grassMaterial.uniforms.hand2Pos.value.copy(intersects[0].point);
+                            grassMaterial.uniforms.hand2Active.value = 1.0;
+                        }
+
+                        // Only process first touch for now
+                        break;
+                    }
+                }
+
+                if (!touchHandActive && isTouchDevice && !isRightClick) {
+                    handRight.classList.remove('active');
+                    if (!isRightClick) {
+                        grassMaterial.uniforms.hand2Active.value = 0.0;
+                    }
                 }
             }
 
