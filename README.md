@@ -1,6 +1,8 @@
 # Time to Touch Grass
 
-A procedural, infinite spherical world where you can finally tell your friends that it's time to go touch grass.
+A friend talking too much politics? Getting too frustrated at the media? Stressed out about something far too small? Or simply been inside for too long? Finally you can now tell them it's time to touch grass!
+
+A procedural, infinite spherical world where you can feel the wind in your hair and the sun on your face and touch some grass.
 
 ## 🌿 Features
 - **Infinite Spherical World**: Walk around a small planet populated with procedural grass, trees, and clouds.
