@@ -16,8 +16,12 @@
 
         canvas {
             display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100vw;
             height: 100vh;
+            z-index: 0;
         }
 
         #ui-container {
@@ -27,18 +31,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-        }
-
-        h1 {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            margin: 0;
-            font-weight: 300;
-            letter-spacing: 2px;
-            font-size: 1rem;
-            opacity: 0.5;
-            color: white;
+            z-index: 1;
         }
 
         .hud-top-left {
@@ -57,6 +50,34 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
             backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .trophy-icon {
+            font-size: 2em;
+            filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.5));
+        }
+
+        .share-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.75em;
+            transition: all 0.3s ease;
+            pointer-events: auto;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        .share-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
         }
 
         .score-label {
@@ -121,9 +142,9 @@
         }
 
         .achievement-item {
-            background: rgba(255, 215, 0, 0.2);
-            border: 1px solid rgba(255, 215, 0, 0.5);
-            color: #ffd700;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(255, 215, 0, 0.8);
+            color: white;
             padding: 8px 12px;
             border-radius: 5px;
             font-size: 0.9em;
@@ -131,6 +152,21 @@
             align-items: center;
             gap: 8px;
             animation: slideIn 0.5s ease-out;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+        }
+
+        .achievement-item.special {
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.8), rgba(75, 0, 130, 0.8));
+            border: 2px solid rgba(186, 85, 211, 0.9);
+            box-shadow: 0 2px 12px rgba(138, 43, 226, 0.5);
+        }
+
+        .achievement-item.marathon {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.9), rgba(255, 140, 0, 0.9));
+            border: 2px solid rgba(255, 215, 0, 1);
+            box-shadow: 0 2px 12px rgba(255, 215, 0, 0.6);
+            font-weight: bold;
         }
 
         @keyframes slideIn {
@@ -170,9 +206,23 @@
             text-align: center;
             color: white;
             font-size: 1.2em;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
             pointer-events: none;
             transition: opacity 0.5s;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 30px 40px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        #instructions h2 {
+            margin: 0 0 20px 0;
+            font-size: 2.2em;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: none;
+            opacity: 1;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
         }
 
         .hand-cursor {
@@ -418,11 +468,16 @@
     </div>
 
     <div id="ui-container">
-        <h1>Time to Touch Grass</h1>
         <div class="hud-top-left">
             <div class="score-container">
-                <div class="score-label">Grass Touched</div>
-                <div id="score-value">0m</div>
+                <div class="trophy-icon">🏆</div>
+                <div>
+                    <div class="score-label">Grass Touched</div>
+                    <div>
+                        <span id="score-value">0m</span>
+                        <button class="share-btn" id="share-btn" title="Share your progress">Share</button>
+                    </div>
+                </div>
             </div>
             <div class="progress-container">
                 <div class="progress-label">Next: <span id="next-achievement-name">First Touch</span></div>
@@ -436,6 +491,7 @@
         </div>
 
         <div id="instructions">
+            <h2>Time to Touch Grass</h2>
             <p>Click to Start</p>
             <p>WASD to Move</p>
             <p>Mouse to Look</p>
@@ -445,7 +501,9 @@
 
         <div id="footer-links" style="position: absolute; bottom: 10px; left: 10px; text-align: left; pointer-events: auto; font-size: 12px; opacity: 0.8;">
             <a href="https://github.com/jatacid/time-to-touch-grass" target="_blank" style="color: white; text-decoration: none; margin-right: 10px; text-shadow: 1px 1px 2px black;">GitHub</a>
-            <a href="https://www.paypal.com/donate/?hosted_button_id=9VFG2KJ8HW6EW" target="_blank" style="background-color: #ffcc00; color: black; padding: 4px 8px; border-radius: 3px; text-decoration: none; font-weight: bold; box-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Donate</a>
+            <a href="https://www.paypal.com/donate/?hosted_button_id=9VFG2KJ8HW6EW" target="_blank" style="background-color: #ffcc00; color: black; padding: 4px 8px; border-radius: 3px; text-decoration: none; font-weight: bold; box-shadow: 1px 1px 2px rgba(0,0,0,0.5); white-space: nowrap;">
+                Donate <span style="font-size: 9px; font-weight: normal;">(or sponsor)</span>
+            </a>
         </div>
 
         <!-- Mobile Pause Button -->
@@ -472,7 +530,6 @@
     </div>
 
     <div id="achievement-popup" class="hidden">
-        <div class="achievement-icon">🏆</div>
         <div class="achievement-text">
             <div class="achievement-title">Achievement Unlocked!</div>
             <div id="achievement-name">First Touch</div>
@@ -1017,8 +1074,9 @@
                                 spawnTreeAt(spawnPos, spawnQuat);
                             }
 
-                            // Achievement check?
-                            addAchievementToUI("Anti Establishment");
+                            // Achievement!
+                            const antiEstablishment = { id: 'anti_establishment', name: 'Anti Establishment', special: 'special' };
+                            addAchievementToUI(antiEstablishment);
                             break;
                         }
                     }
@@ -1220,17 +1278,33 @@
         const achievementsList = document.getElementById('achievements-list');
 
         const achievements = [
-            { id: 'first_touch', name: 'First Touch', threshold: 5, unlocked: false },
+            { id: 'first_touch', name: 'First Touch', threshold: 0.1, unlocked: false },
             { id: 'sprout', name: 'Sprout', threshold: 25, unlocked: false },
-            { id: 'gardener', name: 'Gardener', threshold: 75, unlocked: false },
-            { id: 'hiker', name: 'Hiker', threshold: 150, unlocked: false },
-            { id: 'artist', name: 'Landscape Artist', threshold: 250, unlocked: false },
+            { id: 'seedling', name: 'Seedling', threshold: 50, unlocked: false },
+            { id: 'gardener', name: 'Gardener', threshold: 100, unlocked: false },
+            { id: 'hiker', name: 'Hiker', threshold: 200, unlocked: false },
             { id: 'circumnavigator', name: 'Circumnavigator', threshold: 314, unlocked: false },
             { id: 'explorer', name: 'Explorer', threshold: 500, unlocked: false },
-            { id: 'green_thumb', name: 'Green Thumb', threshold: 750, unlocked: false },
-            { id: 'terraformer', name: 'Terraformer', threshold: 1500, unlocked: false },
+            { id: 'wanderer', name: 'Wanderer', threshold: 750, unlocked: false },
+            { id: 'milestone_1k', name: '1 Kilometer', threshold: 1000, unlocked: false },
+            { id: 'green_thumb', name: 'Green Thumb', threshold: 1500, unlocked: false },
+            { id: 'nature_lover', name: 'Nature Lover', threshold: 2000, unlocked: false },
+            { id: 'terraformer', name: 'Terraformer', threshold: 2500, unlocked: false },
             { id: 'eco_warrior', name: 'Eco-Warrior', threshold: 3000, unlocked: false },
-            { id: 'grass_god', name: 'Grass God', threshold: 10000, unlocked: false }
+            { id: 'trail_blazer', name: 'Trail Blazer', threshold: 4000, unlocked: false },
+            { id: 'milestone_5k', name: '5 Kilometers', threshold: 5000, unlocked: false },
+            { id: 'adventurer', name: 'Adventurer', threshold: 6500, unlocked: false },
+            { id: 'nomad', name: 'Nomad', threshold: 8000, unlocked: false },
+            { id: 'grass_god', name: 'Grass God', threshold: 10000, unlocked: false },
+            { id: 'legend', name: 'Legend', threshold: 12500, unlocked: false },
+            { id: 'milestone_15k', name: '15 Kilometers', threshold: 15000, unlocked: false },
+            { id: 'ultra_runner', name: 'Ultra Runner', threshold: 18000, unlocked: false },
+            { id: 'half_marathon', name: 'Half Marathon', threshold: 21097, unlocked: false },
+            { id: 'endurance_master', name: 'Endurance Master', threshold: 25000, unlocked: false },
+            { id: 'milestone_30k', name: '30 Kilometers', threshold: 30000, unlocked: false },
+            { id: 'iron_will', name: 'Iron Will', threshold: 35000, unlocked: false },
+            { id: 'almost_there', name: 'Almost There', threshold: 40000, unlocked: false },
+            { id: 'marathon', name: 'Marathon', threshold: 42195, unlocked: false, special: 'marathon' }
         ];
 
         function updateGamification(deltaDist) {
@@ -1252,7 +1326,7 @@
                     progressBarFill.style.width = progress + '%';
                     if (totalDistance >= nextAch.threshold) {
                         nextAch.unlocked = true;
-                        addAchievementToUI(nextAch.name);
+                        addAchievementToUI(nextAch);
                     }
                 } else {
                     nextAchievementName.textContent = "All Unlocked!";
@@ -1261,12 +1335,51 @@
             }
         }
 
-        function addAchievementToUI(name) {
+        function addAchievementToUI(achievement) {
             const div = document.createElement('div');
             div.className = 'achievement-item';
-            div.innerHTML = `<span>🏆</span> <span>${name}</span>`;
+            if (achievement.special) {
+                div.classList.add(achievement.special);
+            }
+            div.innerHTML = `<span>🏆</span> <span>${achievement.name}</span>`;
             achievementsList.insertBefore(div, achievementsList.firstChild);
         }
+
+        // --- Share Functionality ---
+        const shareBtn = document.getElementById('share-btn');
+        shareBtn.addEventListener('click', async () => {
+            const distance = Math.floor(totalDistance);
+            const distanceKm = (distance / 1000).toFixed(2);
+            const shareText = `I've touched ${distance}m (${distanceKm}km) of grass today! 🌱\n\nhttps://jatacid.github.io/time-to-touch-grass/`;
+
+            // Try Web Share API first (mobile friendly)
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Time to Touch Grass',
+                        text: shareText
+                    });
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.error('Share failed:', err);
+                    }
+                }
+            } else {
+                // Fallback to clipboard
+                try {
+                    await navigator.clipboard.writeText(shareText);
+                    // Show temporary confirmation
+                    const originalText = shareBtn.innerHTML;
+                    shareBtn.innerHTML = '✓ Copied!';
+                    setTimeout(() => {
+                        shareBtn.innerHTML = originalText;
+                    }, 2000);
+                } catch (err) {
+                    console.error('Copy failed:', err);
+                    alert('Share text:\n\n' + shareText);
+                }
+            }
+        });
 
         // --- Animation Loop ---
         const clock = new THREE.Clock();
@@ -1436,6 +1549,16 @@
             }
 
             grassMaterial.uniforms.time.value = time;
+
+            // Check for First Touch achievement on any interaction (independent of movement)
+            const touchHandActive = activeTouches.size > 0;
+            if ((isLeftClick || isRightClick || touchHandActive) && isLocked) {
+                const firstTouch = achievements.find(a => a.id === 'first_touch');
+                if (firstTouch && !firstTouch.unlocked) {
+                    firstTouch.unlocked = true;
+                    addAchievementToUI(firstTouch);
+                }
+            }
 
             const deltaDist = playerGroup.position.distanceTo(lastPos);
             updateGamification(deltaDist);
