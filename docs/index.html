@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Time to Touch Grass</title>
     <style>
+        html {
+            height: 100%;
+        }
         body {
             margin: 0;
             padding: 0;
@@ -14,7 +17,7 @@
             font-family: 'Inter', sans-serif;
             user-select: none;
             width: 100vw;
-            height: 100vh;
+            height: 100%;
             position: fixed;
         }
 
@@ -1609,11 +1612,19 @@
 
         animate();
 
-        window.addEventListener('resize', () => {
+        const onWindowResize = () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+            
+            // Fix for mobile browsers (address bar issue)
+            document.body.style.height = window.innerHeight + 'px';
+        };
+
+        window.addEventListener('resize', onWindowResize);
+        
+        // Initial call
+        onWindowResize();
     </script>
 </body>
 
