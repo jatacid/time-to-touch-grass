@@ -892,6 +892,9 @@
             touchInstructions.style.display = 'block';
             document.getElementById('joystick-container').style.display = 'block';
             document.getElementById('mobile-pause-btn').style.display = 'flex';
+
+            // Tilt camera down to look more at the grass on mobile
+            camera.rotation.x = -0.3; // Tilt down about 17 degrees
         }
 
         // Mobile pause button handler
