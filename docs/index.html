@@ -8,15 +8,19 @@
     <style>
         body {
             margin: 0;
+            padding: 0;
             overflow: hidden;
             background-color: #000;
             font-family: 'Inter', sans-serif;
             user-select: none;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
         }
 
         canvas {
             display: block;
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
@@ -284,6 +288,7 @@
             pointer-events: auto;
             opacity: 0.7;
             display: none;
+            z-index: 100;
         }
 
         #joystick-base {
@@ -322,6 +327,22 @@
             transition: opacity 0.5s;
             display: none;
             opacity: 1;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 30px 40px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        #touch-instructions h2 {
+            margin: 0 0 20px 0;
+            font-size: 2.2em;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: none;
+            opacity: 1;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
         }
 
         /* Mobile Pause Button */
@@ -396,6 +417,20 @@
             #footer-links a {
                 margin-right: 5px !important;
                 padding: 3px 6px !important;
+            }
+
+            #touch-instructions {
+                padding: 20px 30px;
+                font-size: 1em;
+            }
+
+            #touch-instructions h2 {
+                font-size: 1.8em;
+                margin: 0 0 15px 0;
+            }
+
+            #touch-instructions p {
+                margin: 8px 0;
             }
 
             #joystick-container {
@@ -508,12 +543,12 @@
 
         <!-- Mobile Pause Button -->
         <button id="mobile-pause-btn">⏸</button>
-    </div>
 
-    <!-- Virtual Joystick for Mobile -->
-    <div id="joystick-container">
-        <div id="joystick-base">
-            <div id="joystick-knob"></div>
+        <!-- Virtual Joystick for Mobile -->
+        <div id="joystick-container">
+            <div id="joystick-base">
+                <div id="joystick-knob"></div>
+            </div>
         </div>
     </div>
 
@@ -523,6 +558,7 @@
 
     <!-- Touch instructions (shown on mobile) -->
     <div id="touch-instructions">
+        <h2>Time to Touch Grass</h2>
         <p>Tap to Start</p>
         <p>Joystick to Move</p>
         <p>Touch Right Side to Interact with Grass</p>
@@ -941,7 +977,7 @@
         const handRight = document.getElementById('hand-right');
 
         // Detect touch device (only show mobile controls on small screens)
-        const isTouchDevice = (('ontouchstart' in window) || (navigator.maxTouchPoints > 0)) && (window.innerWidth <= 600);
+        const isTouchDevice = (('ontouchstart' in window) || (navigator.maxTouchPoints > 0)) && (window.innerWidth <= 1024);
 
         // Show appropriate instructions and joystick
         if (isTouchDevice) {
@@ -956,20 +992,22 @@
 
         // Mobile pause button handler
         const mobilePauseBtn = document.getElementById('mobile-pause-btn');
-        mobilePauseBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (isLocked) {
-                // Pause game
-                isLocked = false;
-                touchInstructions.style.opacity = 1;
-                mobilePauseBtn.textContent = '▶';
-            } else {
-                // Resume game
-                isLocked = true;
-                touchInstructions.style.opacity = 0;
-                mobilePauseBtn.textContent = '⏸';
-            }
-        });
+        if (mobilePauseBtn) {
+            mobilePauseBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (isLocked) {
+                    // Pause game
+                    isLocked = false;
+                    touchInstructions.style.opacity = 1;
+                    mobilePauseBtn.textContent = '▶';
+                } else {
+                    // Resume game
+                    isLocked = true;
+                    touchInstructions.style.opacity = 0;
+                    mobilePauseBtn.textContent = '⏸';
+                }
+            });
+        }
 
         // State
         const moveState = { forward: false, backward: false, left: false, right: false };
@@ -1130,81 +1168,83 @@
         const maxJoystickDistance = 35; // Max distance knob can move from center
 
         // Virtual Joystick Touch Handlers
-        joystickBase.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (joystickTouchId === null) {
-                const touch = e.changedTouches[0];
-                joystickTouchId = touch.identifier;
-                joystickActive = true;
+        if (joystickBase) {
+            joystickBase.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (joystickTouchId === null) {
+                    const touch = e.changedTouches[0];
+                    joystickTouchId = touch.identifier;
+                    joystickActive = true;
 
-                // Calculate joystick center in screen coordinates
-                const rect = joystickBase.getBoundingClientRect();
-                joystickCenter.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
-            }
-        }, { passive: false });
+                    // Calculate joystick center in screen coordinates
+                    const rect = joystickBase.getBoundingClientRect();
+                    joystickCenter.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
+                }
+            }, { passive: false });
 
-        joystickBase.addEventListener('touchmove', (e) => {
-            if (!joystickActive) return;
+            joystickBase.addEventListener('touchmove', (e) => {
+                if (!joystickActive) return;
 
-            for (let touch of e.changedTouches) {
-                if (touch.identifier === joystickTouchId) {
-                    const dx = touch.clientX - joystickCenter.x;
-                    const dy = touch.clientY - joystickCenter.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
+                for (let touch of e.changedTouches) {
+                    if (touch.identifier === joystickTouchId) {
+                        const dx = touch.clientX - joystickCenter.x;
+                        const dy = touch.clientY - joystickCenter.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
 
-                    // Clamp to max distance
-                    const clampedDistance = Math.min(distance, maxJoystickDistance);
-                    const angle = Math.atan2(dy, dx);
+                        // Clamp to max distance
+                        const clampedDistance = Math.min(distance, maxJoystickDistance);
+                        const angle = Math.atan2(dy, dx);
 
-                    // Update knob position
-                    const knobX = Math.cos(angle) * clampedDistance;
-                    const knobY = Math.sin(angle) * clampedDistance;
-                    joystickKnob.style.transform = `translate(calc(-50% + ${knobX}px), calc(-50% + ${knobY}px))`;
+                        // Update knob position
+                        const knobX = Math.cos(angle) * clampedDistance;
+                        const knobY = Math.sin(angle) * clampedDistance;
+                        joystickKnob.style.transform = `translate(calc(-50% + ${knobX}px), calc(-50% + ${knobY}px))`;
 
-                    // Update direction (normalized)
-                    if (distance > 5) { // Dead zone
-                        joystickDirection.set(dx / distance, dy / distance);
+                        // Update direction (normalized)
+                        if (distance > 5) { // Dead zone
+                            joystickDirection.set(dx / distance, dy / distance);
 
-                        // Update movement state based on direction
-                        const threshold = 0.5;
-                        moveState.forward = joystickDirection.y < -threshold;
-                        moveState.backward = joystickDirection.y > threshold;
-                        // Left/right now turns instead of strafing
-                        moveState.left = false;
-                        moveState.right = false;
-                    } else {
-                        joystickDirection.set(0, 0);
-                        moveState.forward = false;
-                        moveState.backward = false;
-                        moveState.left = false;
-                        moveState.right = false;
+                            // Update movement state based on direction
+                            const threshold = 0.5;
+                            moveState.forward = joystickDirection.y < -threshold;
+                            moveState.backward = joystickDirection.y > threshold;
+                            // Left/right now turns instead of strafing
+                            moveState.left = false;
+                            moveState.right = false;
+                        } else {
+                            joystickDirection.set(0, 0);
+                            moveState.forward = false;
+                            moveState.backward = false;
+                            moveState.left = false;
+                            moveState.right = false;
+                        }
+                        break;
                     }
-                    break;
                 }
-            }
-        }, { passive: true });
+            }, { passive: true });
 
-        const resetJoystick = () => {
-            joystickActive = false;
-            joystickTouchId = null;
-            joystickKnob.style.transform = 'translate(-50%, -50%)';
-            joystickDirection.set(0, 0);
-            moveState.forward = false;
-            moveState.backward = false;
-            moveState.left = false;
-            moveState.right = false;
-        };
+            const resetJoystick = () => {
+                joystickActive = false;
+                joystickTouchId = null;
+                joystickKnob.style.transform = 'translate(-50%, -50%)';
+                joystickDirection.set(0, 0);
+                moveState.forward = false;
+                moveState.backward = false;
+                moveState.left = false;
+                moveState.right = false;
+            };
 
-        joystickBase.addEventListener('touchend', (e) => {
-            for (let touch of e.changedTouches) {
-                if (touch.identifier === joystickTouchId) {
-                    resetJoystick();
-                    break;
+            joystickBase.addEventListener('touchend', (e) => {
+                for (let touch of e.changedTouches) {
+                    if (touch.identifier === joystickTouchId) {
+                        resetJoystick();
+                        break;
+                    }
                 }
-            }
-        });
+            });
 
-        joystickBase.addEventListener('touchcancel', resetJoystick);
+            joystickBase.addEventListener('touchcancel', resetJoystick);
+        }
 
         // Grass Interaction Touch Handlers (Right side of screen)
         document.body.addEventListener('touchstart', (e) => {
