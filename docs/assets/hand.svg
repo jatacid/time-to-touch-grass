@@ -1,0 +1,51 @@
+<svg width="300" height="400" viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="handGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD54F;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFC107;stop-opacity:1" />
+    </linearGradient>
+    <filter id="handShadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="2" dy="3" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.4"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <g filter="url(#handShadow)">
+    <!-- Palm -->
+    <ellipse cx="150" cy="220" rx="70" ry="85" fill="url(#handGradient)"/>
+    
+    <!-- Thumb -->
+    <path d="M 90 200 Q 60 180 50 150 Q 45 120 60 110 Q 75 100 85 115 Q 95 130 100 150 Q 105 170 100 190 Z" 
+          fill="url(#handGradient)" stroke="#F9A825" stroke-width="1"/>
+    
+    <!-- Index Finger -->
+    <ellipse cx="120" cy="120" rx="18" ry="65" fill="url(#handGradient)" stroke="#F9A825" stroke-width="1"/>
+    <ellipse cx="120" cy="100" rx="16" ry="25" fill="url(#handGradient)"/>
+    
+    <!-- Middle Finger -->
+    <ellipse cx="150" cy="100" rx="18" ry="75" fill="url(#handGradient)" stroke="#F9A825" stroke-width="1"/>
+    <ellipse cx="150" cy="75" rx="16" ry="28" fill="url(#handGradient)"/>
+    
+    <!-- Ring Finger -->
+    <ellipse cx="180" cy="115" rx="18" ry="68" fill="url(#handGradient)" stroke="#F9A825" stroke-width="1"/>
+    <ellipse cx="180" cy="95" rx="16" ry="26" fill="url(#handGradient)"/>
+    
+    <!-- Pinky -->
+    <ellipse cx="208" cy="145" rx="16" ry="55" fill="url(#handGradient)" stroke="#F9A825" stroke-width="1"/>
+    <ellipse cx="208" cy="130" rx="14" ry="22" fill="url(#handGradient)"/>
+    
+    <!-- Wrist/Forearm -->
+    <rect x="110" y="280" width="80" height="120" rx="15" fill="url(#handGradient)" stroke="#F9A825" stroke-width="1"/>
+    
+    <!-- Palm details -->
+    <path d="M 100 240 Q 150 245 200 240" stroke="#F9A825" stroke-width="2" fill="none" opacity="0.3"/>
+    <path d="M 105 260 Q 150 263 195 260" stroke="#F9A825" stroke-width="1.5" fill="none" opacity="0.2"/>
+  </g>
+</svg>
