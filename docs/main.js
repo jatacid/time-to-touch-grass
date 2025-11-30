@@ -304,6 +304,72 @@ function spawnTreeAt(position, quaternion) {
     animatePop();
 }
 
+// --- Mushrooms ---
+const mushrooms = [];
+const mushroomGroup = new THREE.Group();
+scene.add(mushroomGroup);
+
+function createMushroom(pos, quat) {
+    const group = new THREE.Group();
+    group.position.copy(pos);
+    group.quaternion.copy(quat);
+
+    // Stem
+    const stem = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.1, 0.15, 0.4, 8),
+        new THREE.MeshStandardMaterial({ color: 0xF5F5DC, roughness: 0.8 })
+    );
+    stem.position.y = 0.2;
+    group.add(stem);
+
+    // Cap
+    const cap = new THREE.Mesh(
+        new THREE.SphereGeometry(0.3, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+        new THREE.MeshStandardMaterial({ color: 0xFF0000, roughness: 0.5 })
+    );
+    cap.position.y = 0.4;
+    // Add white spots to cap
+    const spotGeo = new THREE.CircleGeometry(0.05, 6);
+    const spotMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+    
+    for(let i=0; i<5; i++) {
+        const spot = new THREE.Mesh(spotGeo, spotMat);
+        spot.position.set(
+            (Math.random()-0.5)*0.4,
+            0.15 + Math.random()*0.1,
+            (Math.random()-0.5)*0.4
+        );
+        spot.lookAt(0, 10, 0); // Look up roughly
+        spot.rotation.x = -Math.PI/2;
+        cap.add(spot);
+    }
+
+    group.add(cap);
+    
+    // Random scale
+    group.scale.setScalar(0.8 + Math.random() * 0.5);
+    
+    mushroomGroup.add(group);
+    mushrooms.push(group);
+}
+
+function spawnMushroom() {
+    if (mushrooms.length >= 200) return; // Limit total mushrooms
+
+    const _n = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
+    const _p = _n.clone().multiplyScalar(WORLD_RADIUS);
+    const _q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), _n);
+    
+    createMushroom(_p, _q);
+}
+
+window.resetMushrooms = function() {
+    for (let m of mushrooms) {
+        mushroomGroup.remove(m);
+    }
+    mushrooms.length = 0;
+};
+
 // --- Flying Geese ---
 const geeseGroup = new THREE.Group();
 scene.add(geeseGroup);
@@ -698,6 +764,21 @@ function animate() {
     lastHand1Touching = hand1Touching;
     lastHand2Touching = hand2Touching;
     
+    // Mushroom Spawning & Collection
+    if (Math.random() < 0.02) { // 2% chance per frame
+        spawnMushroom();
+    }
+
+    // Check collection
+    for (let i = mushrooms.length - 1; i >= 0; i--) {
+        const m = mushrooms[i];
+        if (playerGroup.position.distanceTo(m.position) < 2.0) {
+            mushroomGroup.remove(m);
+            mushrooms.splice(i, 1);
+            window.collectMushroom();
+        }
+    }
+
     renderer.render(scene, camera);
 }
 

@@ -21,6 +21,7 @@ window.joystickTouchId = joystickTouchId;
 // --- Gamification State ---
 let totalDistance = 0;
 let grassTapCount = 0;
+let mushroomCount = 0;
 const achievements = [
     { id: 'first_touch', name: 'First Touch', description: 'Touched grass for the first time', threshold: 0.1, unlocked: false },
     { id: 'tap_master', name: 'Not into stroking grass', description: 'Tapped grass 5 times', threshold: 5, type: 'taps', unlocked: false },
@@ -55,7 +56,11 @@ const achievements = [
     { id: 'house_3', name: 'Vandalism', description: 'Destroyed 3 houses', threshold: 3, type: 'house', unlocked: false },
     { id: 'house_4', name: 'Arsonist', description: 'Destroyed 4 houses', threshold: 4, type: 'house', unlocked: false },
     { id: 'house_5', name: 'Demolition Expert', description: 'Destroyed 5 houses', threshold: 5, type: 'house', unlocked: false },
-    { id: 'anti_establishment', name: 'Anti Establishment', description: 'Destroyed all houses on the planet', threshold: 5, type: 'house_all', unlocked: false }
+    { id: 'anti_establishment', name: 'Anti Establishment', description: 'Destroyed all houses on the planet', threshold: 5, type: 'house_all', unlocked: false },
+    { id: 'forager', name: 'Forager', description: 'Collected 1 mushroom', threshold: 1, type: 'mushroom', unlocked: false },
+    { id: 'mycologist', name: 'Mycologist', description: 'Collected 10 mushrooms', threshold: 10, type: 'mushroom', unlocked: false },
+    { id: 'psychonaut', name: 'Psychonaut', description: 'Collected 50 mushrooms', threshold: 50, type: 'mushroom', unlocked: false },
+    { id: 'enlightened', name: 'Enlightened', description: 'Collected 100 mushrooms', threshold: 100, type: 'mushroom', unlocked: false }
 ];
 
 // --- UI Elements ---
@@ -64,7 +69,6 @@ const progressBarFill = document.getElementById('progress-bar-fill');
 const nextAchievementName = document.getElementById('next-achievement-name');
 const achievementsList = document.getElementById('achievements-list');
 const instructions = document.getElementById('instructions');
-const touchInstructions = document.getElementById('touch-instructions');
 const crosshair = document.getElementById('crosshair');
 const mobilePauseBtn = document.getElementById('mobile-pause-btn');
 const joystickContainer = document.getElementById('joystick-container');
@@ -73,6 +77,9 @@ const joystickKnob = document.getElementById('joystick-knob');
 const shareBtn = document.getElementById('share-btn');
 const handLeft = document.getElementById('hand-left');
 const handRight = document.getElementById('hand-right');
+const mushroomCountDisplay = document.getElementById('mushroom-count');
+const useMushroomsBtn = document.getElementById('use-mushrooms-btn');
+const meditationOverlay = document.getElementById('meditation-overlay');
 
 // --- Functions ---
 
@@ -91,7 +98,6 @@ function setIsLocked(locked) {
     window.isLocked = locked; // Update global
     if (isLocked) {
         instructions.style.opacity = 0;
-        touchInstructions.style.opacity = 0;
         mobilePauseBtn.textContent = '⏸';
         if (isTouchDevice) {
             crosshair.style.opacity = 0;
@@ -99,8 +105,7 @@ function setIsLocked(locked) {
             crosshair.style.opacity = 1;
         }
     } else {
-        if (!isTouchDevice) instructions.style.opacity = 1;
-        else touchInstructions.style.opacity = 1;
+        instructions.style.opacity = 1;
         
         crosshair.style.opacity = 0;
         mobilePauseBtn.textContent = '▶';
@@ -159,10 +164,54 @@ function incrementGrassTaps() {
         tapAch.unlocked = true;
         addAchievementToUI(tapAch);
     }
-    if (tapAch && !tapAch.unlocked && grassTapCount >= tapAch.threshold) {
-        tapAch.unlocked = true;
-        addAchievementToUI(tapAch);
+}
+
+function collectMushroom() {
+    mushroomCount++;
+    mushroomCountDisplay.textContent = mushroomCount;
+    
+    // Check achievements
+    achievements.filter(a => a.type === 'mushroom' && !a.unlocked).forEach(ach => {
+        if (mushroomCount >= ach.threshold) {
+            ach.unlocked = true;
+            addAchievementToUI(ach);
+        }
+    });
+
+    if (mushroomCount >= 5) {
+        useMushroomsBtn.style.display = 'block';
     }
+}
+
+function useMushrooms() {
+    meditationOverlay.style.display = 'flex';
+    meditationOverlay.style.opacity = 0;
+    
+    // Fade in
+    let opacity = 0;
+    const fadeIn = setInterval(() => {
+        opacity += 0.05;
+        meditationOverlay.style.opacity = opacity;
+        if (opacity >= 1) clearInterval(fadeIn);
+    }, 50);
+
+    setTimeout(() => {
+        // Reset logic
+        mushroomCount = 0;
+        mushroomCountDisplay.textContent = 0;
+        useMushroomsBtn.style.display = 'none';
+        if (window.resetMushrooms) window.resetMushrooms();
+
+        // Fade out
+        const fadeOut = setInterval(() => {
+            opacity -= 0.05;
+            meditationOverlay.style.opacity = opacity;
+            if (opacity <= 0) {
+                clearInterval(fadeOut);
+                meditationOverlay.style.display = 'none';
+            }
+        }, 50);
+    }, 3000);
 }
 
 function unlockAchievement(id) {
@@ -194,8 +243,7 @@ function addAchievementToUI(achievement) {
 function initUI() {
     // Mobile Detection & Setup
     if (isTouchDevice) {
-        instructions.style.display = 'none';
-        touchInstructions.style.display = 'block';
+        // instructions.style.display = 'none'; // No longer hiding, using CSS
         joystickContainer.style.display = 'block';
         mobilePauseBtn.style.display = 'flex';
     }
@@ -393,4 +441,19 @@ window.updateGamification = updateGamification;
 window.checkFirstTouch = checkFirstTouch;
 window.incrementGrassTaps = incrementGrassTaps;
 window.unlockAchievement = unlockAchievement;
+window.collectMushroom = collectMushroom;
 window.initUI = initUI;
+
+// Event Listener for Button
+document.addEventListener('DOMContentLoaded', () => {
+    if (useMushroomsBtn) {
+        useMushroomsBtn.addEventListener('click', useMushrooms);
+    }
+});
+
+// Key Listener for 'X'
+document.addEventListener('keydown', (e) => {
+    if ((e.code === 'KeyX' || e.key === 'x') && mushroomCount >= 5) {
+        useMushrooms();
+    }
+});

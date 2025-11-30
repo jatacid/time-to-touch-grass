@@ -89,6 +89,19 @@ canvas {
     font-family: monospace;
 }
 
+#mushroom-count {
+    font-size: 2em;
+    font-weight: bold;
+    font-family: monospace;
+    color: #8A2BE2;
+}
+
+#use-mushrooms-btn:hover {
+    background-color: #9932CC !important;
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+}
+
 .progress-container {
     background: rgba(0, 0, 0, 0.5);
     padding: 10px;
@@ -228,6 +241,35 @@ button:hover {
     border-radius: 15px;
     border: 1px solid rgba(255, 255, 255, 0.3);
     backdrop-filter: blur(10px);
+    z-index: 2000;
+}
+
+/* Responsive Text Visibility */
+.mobile-text {
+    display: none;
+}
+
+.desktop-text {
+    display: inline;
+}
+
+@media (max-width: 1024px) and (hover: none) {
+    .mobile-text {
+        display: inline;
+    }
+
+    .desktop-text {
+        display: none;
+    }
+
+    /* Hide desktop-only paragraphs completely */
+    p.desktop-text {
+        display: none;
+    }
+
+    p.mobile-text {
+        display: block;
+    }
 }
 
 #instructions h2 {
@@ -359,36 +401,7 @@ button:hover {
     transition: all 0.1s ease-out;
 }
 
-#touch-instructions {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    color: white;
-    font-size: 1.2em;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    pointer-events: none;
-    transition: opacity 0.5s;
-    display: none;
-    opacity: 1;
-    z-index: 10;
-    background: rgba(0, 0, 0, 0.6);
-    padding: 30px 40px;
-    border-radius: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(10px);
-}
-
-#touch-instructions h2 {
-    margin: 0 0 20px 0;
-    font-size: 2.2em;
-    font-weight: 600;
-    letter-spacing: 3px;
-    text-transform: none;
-    opacity: 1;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-}
+/* Old Touch Instructions Removed */
 
 /* Mobile Pause Button */
 #mobile-pause-btn {
@@ -464,17 +477,17 @@ button:hover {
         padding: 3px 6px !important;
     }
 
-    #touch-instructions {
+    #instructions {
         padding: 20px 30px;
         font-size: 1em;
     }
 
-    #touch-instructions h2 {
+    #instructions h2 {
         font-size: 1.8em;
         margin: 0 0 15px 0;
     }
 
-    #touch-instructions p {
+    #instructions p {
         margin: 8px 0;
     }
 
@@ -530,4 +543,32 @@ button:hover {
         font-size: 20px;
         top: 15px;
     }
+}
+
+/* Instructions Panel Updates - Merged into main block above */
+
+.intro-text {
+    font-size: 0.9em;
+    font-style: italic;
+    margin-bottom: 20px;
+    line-height: 1.4;
+    opacity: 0.9;
+}
+
+.signature {
+    text-align: right;
+    margin-top: 5px;
+    font-weight: bold;
+    opacity: 0.8;
+}
+
+.separator {
+    border: 0;
+    height: 1px;
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0));
+    margin: 20px 0;
+}
+
+.controls-list p {
+    margin: 8px 0;
 }

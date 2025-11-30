@@ -13,6 +13,10 @@
         <div class="hand">✋</div>
     </div>
 
+    <div id="meditation-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: black; z-index: 9999; justify-content: center; align-items: center; color: #888; font-size: 2em; font-family: sans-serif;">
+        Meditating...
+    </div>
+
     <div id="ui-container">
         <div class="hud-top-left">
             <div class="score-container">
@@ -34,15 +38,43 @@
             <div id="achievements-list">
                 <!-- Unlocked achievements will appear here -->
             </div>
+
+            <div class="mushroom-container" style="margin-top: 15px;">
+                <div class="score-container">
+                    <div class="trophy-icon">🍄</div>
+                    <div>
+                        <div class="score-label">Mushrooms</div>
+                        <div id="mushroom-count">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="use-mushrooms-btn" style="display: none; margin-top: 10px; background-color: #8A2BE2; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold;">Use Mushrooms (Press X)</button>
         </div>
 
         <div id="instructions">
             <h2>Time to Touch Grass</h2>
-            <p>Click to Start</p>
-            <p>WASD to Move</p>
-            <p>Mouse to Look</p>
-            <p>Hold Left/Right Click to Touch Grass</p>
-            <p style="font-size: 0.8em; opacity: 0.7; margin-top: 10px;">Press ESC to Pause</p>
+            <div class="intro-text">
+                <p>"Someone thinks you should touch grass! So that's what this game is - just a simple way to touch grass. There are some other easter eggs though... Can you find them all? I hope you enjoy taking a moment to touch some grass."</p>
+                <p class="signature">- Jatacid</p>
+            </div>
+            <hr class="separator">
+            <div class="controls-list">
+                <p><strong class="desktop-text">Click</strong><strong class="mobile-text">Tap</strong> to Start</p>
+
+                <p class="desktop-text"><strong>WASD</strong> to Move</p>
+                <p class="mobile-text"><strong>Joystick</strong> to Move</p>
+
+                <p class="desktop-text"><strong>Mouse</strong> to Look</p>
+
+                <p class="desktop-text"><strong>Hold Left/Right Click</strong> to Touch Grass</p>
+                <p class="mobile-text"><strong>Touch Right Side</strong> to Interact with Grass</p>
+
+                <p style="font-size: 0.8em; opacity: 0.7; margin-top: 10px;">
+                    <span class="desktop-text">Press <strong>ESC</strong> to Pause</span>
+                    <span class="mobile-text">Tap <strong>Pause</strong> to Menu</span>
+                </p>
+            </div>
         </div>
 
         <div id="footer-links" style="position: absolute; bottom: 10px; left: 10px; text-align: left; pointer-events: auto; font-size: 12px; opacity: 0.8;">
@@ -70,15 +102,6 @@
     <div id="crosshair">+</div>
     <div id="hand-left" class="hand-cursor">✋</div>
     <div id="hand-right" class="hand-cursor">✋</div>
-
-    <!-- Touch instructions (shown on mobile) -->
-    <div id="touch-instructions">
-        <h2>Time to Touch Grass</h2>
-        <p>Tap to Start</p>
-        <p>Joystick to Move</p>
-        <p>Touch Right Side to Interact with Grass</p>
-        <p style="font-size: 0.8em; opacity: 0.7; margin-top: 10px;">Tap Screen to Resume</p>
-    </div>
 
     <!-- Load Three.js globally -->
     <script src="https://unpkg.com/three@0.160.0/build/three.js"></script>
