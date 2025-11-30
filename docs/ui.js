@@ -49,7 +49,13 @@ const achievements = [
     { id: 'milestone_30k', name: '30 Kilometers', description: '30,000m of grass touched', threshold: 30000, unlocked: false },
     { id: 'iron_will', name: 'Iron Will', description: '35,000m of grass touched', threshold: 35000, unlocked: false },
     { id: 'almost_there', name: 'Almost There', description: '40,000m of grass touched', threshold: 40000, unlocked: false },
-    { id: 'marathon', name: 'Marathon', description: '42,195m of grass touched', threshold: 42195, unlocked: false, special: 'marathon' }
+    { id: 'marathon', name: 'Marathon', description: '42,195m of grass touched', threshold: 42195, unlocked: false, special: 'marathon' },
+    { id: 'house_1', name: 'Breaking and Entering', description: 'Destroyed a house', threshold: 1, type: 'house', unlocked: false },
+    { id: 'house_2', name: 'Property Damage', description: 'Destroyed 2 houses', threshold: 2, type: 'house', unlocked: false },
+    { id: 'house_3', name: 'Vandalism', description: 'Destroyed 3 houses', threshold: 3, type: 'house', unlocked: false },
+    { id: 'house_4', name: 'Arsonist', description: 'Destroyed 4 houses', threshold: 4, type: 'house', unlocked: false },
+    { id: 'house_5', name: 'Demolition Expert', description: 'Destroyed 5 houses', threshold: 5, type: 'house', unlocked: false },
+    { id: 'anti_establishment', name: 'Anti Establishment', description: 'Destroyed all houses on the planet', threshold: 5, type: 'house_all', unlocked: false }
 ];
 
 // --- UI Elements ---
@@ -152,6 +158,18 @@ function incrementGrassTaps() {
     if (tapAch && !tapAch.unlocked && grassTapCount >= tapAch.threshold) {
         tapAch.unlocked = true;
         addAchievementToUI(tapAch);
+    }
+    if (tapAch && !tapAch.unlocked && grassTapCount >= tapAch.threshold) {
+        tapAch.unlocked = true;
+        addAchievementToUI(tapAch);
+    }
+}
+
+function unlockAchievement(id) {
+    const ach = achievements.find(a => a.id === id);
+    if (ach && !ach.unlocked) {
+        ach.unlocked = true;
+        addAchievementToUI(ach);
     }
 }
 
@@ -374,4 +392,5 @@ window.setIsLocked = setIsLocked;
 window.updateGamification = updateGamification;
 window.checkFirstTouch = checkFirstTouch;
 window.incrementGrassTaps = incrementGrassTaps;
+window.unlockAchievement = unlockAchievement;
 window.initUI = initUI;

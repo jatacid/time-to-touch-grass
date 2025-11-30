@@ -233,37 +233,48 @@ for (let i = 0; i < treeCount; i++) {
 scene.add(trunkMesh);
 scene.add(foliageMesh);
 
-// Cottage
-let cottageGroup = new THREE.Group();
-_n.set(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
-_p.copy(_n).multiplyScalar(WORLD_RADIUS);
-_q.setFromUnitVectors(new THREE.Vector3(0,1,0), _n);
-cottageGroup.position.copy(_p);
-cottageGroup.quaternion.copy(_q);
+// --- Procedural Environment (Cottages) ---
+const cottages = [];
+let destroyedHousesCount = 0;
 
-const walls = new THREE.Mesh(
-    new THREE.BoxGeometry(4, 3, 4),
-    new THREE.MeshStandardMaterial({ color: 0xC2B280, roughness: 0.9 }) 
-);
-walls.position.y = 1.5;
-cottageGroup.add(walls);
+function createCottage(pos, quat) {
+    const group = new THREE.Group();
+    group.position.copy(pos);
+    group.quaternion.copy(quat);
 
-const roof = new THREE.Mesh(
-    new THREE.ConeGeometry(3.5, 2, 4),
-    new THREE.MeshStandardMaterial({ color: 0x8B0000, roughness: 0.6 }) 
-);
-roof.position.y = 3 + 1; 
-roof.rotation.y = Math.PI / 4; 
-cottageGroup.add(roof);
+    const walls = new THREE.Mesh(
+        new THREE.BoxGeometry(4, 3, 4),
+        new THREE.MeshStandardMaterial({ color: 0xC2B280, roughness: 0.9 }) 
+    );
+    walls.position.y = 1.5;
+    group.add(walls);
 
-const door = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 2, 0.2),
-    new THREE.MeshStandardMaterial({ color: 0x4A3C31 })
-);
-door.position.set(0, 1, 2.05); 
-door.name = "cottage_door";
-cottageGroup.add(door);
-scene.add(cottageGroup);
+    const roof = new THREE.Mesh(
+        new THREE.ConeGeometry(3.5, 2, 4),
+        new THREE.MeshStandardMaterial({ color: 0x8B0000, roughness: 0.6 }) 
+    );
+    roof.position.y = 3 + 1; 
+    roof.rotation.y = Math.PI / 4; 
+    group.add(roof);
+
+    const door = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 2, 0.2),
+        new THREE.MeshStandardMaterial({ color: 0x4A3C31 })
+    );
+    door.position.set(0, 1, 2.05); 
+    door.name = "cottage_door";
+    group.add(door);
+    
+    scene.add(group);
+    cottages.push(group);
+}
+
+for (let i = 0; i < 5; i++) {
+    _n.set(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
+    _p.copy(_n).multiplyScalar(WORLD_RADIUS);
+    _q.setFromUnitVectors(new THREE.Vector3(0,1,0), _n);
+    createCottage(_p, _q);
+}
 
 function spawnTreeAt(position, quaternion) {
     const group = new THREE.Group();
@@ -402,33 +413,51 @@ document.addEventListener('mousedown', (e) => {
         lastHandPosLeft.copy(handPosLeft);
         
         // --- House Destruction Logic ---
+        // --- House Destruction Logic ---
         raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-        if (cottageGroup) {
+        
+        for (let i = cottages.length - 1; i >= 0; i--) {
+            const cottageGroup = cottages[i];
             const intersects = raycaster.intersectObjects(cottageGroup.children);
+            let hitDoor = false;
+            
             for (let hit of intersects) {
                 if (hit.object.name === "cottage_door") {
-                    const center = cottageGroup.position.clone();
-                    const quat = cottageGroup.quaternion.clone();
-                    scene.remove(cottageGroup);
-                    cottageGroup = null;
-                    
-                    for (let k = 0; k < 15; k++) {
-                        const offset = new THREE.Vector3(
-                            (Math.random() - 0.5) * 8, 0, (Math.random() - 0.5) * 8
-                        );
-                        offset.applyQuaternion(quat);
-                        const spawnPos = center.clone().add(offset);
-                        spawnPos.normalize().multiplyScalar(WORLD_RADIUS);
-                        const spawnQuat = new THREE.Quaternion().setFromUnitVectors(
-                            new THREE.Vector3(0, 1, 0), spawnPos.clone().normalize()
-                        );
-                        spawnTreeAt(spawnPos, spawnQuat);
-                    }
-                    // Note: Achievement logic for Home Wrecker is not in ui.js yet, 
-                    // but we can add it or just ignore for now as it wasn't explicitly requested to be moved/fixed.
-                    // Assuming 'Home Wrecker' is not in the standard list or handled differently.
+                    hitDoor = true;
                     break;
                 }
+            }
+
+            if (hitDoor) {
+                const center = cottageGroup.position.clone();
+                const quat = cottageGroup.quaternion.clone();
+                scene.remove(cottageGroup);
+                cottages.splice(i, 1);
+                
+                // Spawn trees in place of the house
+                for (let k = 0; k < 15; k++) {
+                    const offset = new THREE.Vector3(
+                        (Math.random() - 0.5) * 8, 0, (Math.random() - 0.5) * 8
+                    );
+                    offset.applyQuaternion(quat);
+                    const spawnPos = center.clone().add(offset);
+                    spawnPos.normalize().multiplyScalar(WORLD_RADIUS);
+                    const spawnQuat = new THREE.Quaternion().setFromUnitVectors(
+                        new THREE.Vector3(0, 1, 0), spawnPos.clone().normalize()
+                    );
+                    spawnTreeAt(spawnPos, spawnQuat);
+                }
+
+                destroyedHousesCount++;
+                
+                // Unlock Achievements
+                window.unlockAchievement(`house_${destroyedHousesCount}`);
+                
+                if (destroyedHousesCount === 5) {
+                    window.unlockAchievement('anti_establishment');
+                }
+                
+                break; // Stop checking other cottages if we hit one
             }
         }
         
@@ -541,9 +570,14 @@ function animate() {
             newPos.normalize().multiplyScalar(WORLD_RADIUS);
             
             let collision = false;
-            if (cottageGroup) {
-                const distToCottage = newPos.distanceTo(cottageGroup.position);
-                if (distToCottage < 4.0) collision = true;
+            if (cottages.length > 0) {
+                for (let cottage of cottages) {
+                    const distToCottage = newPos.distanceTo(cottage.position);
+                    if (distToCottage < 4.0) {
+                        collision = true;
+                        break;
+                    }
+                }
             }
             
             if (!collision) playerGroup.position.copy(newPos);
