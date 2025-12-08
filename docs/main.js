@@ -211,6 +211,7 @@ const trunkMat = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.
 const foliageMat = new THREE.MeshStandardMaterial({ color: 0x228B22, roughness: 0.8 });
 const trunkMesh = new THREE.InstancedMesh(trunkGeo, trunkMat, treeCount);
 const foliageMesh = new THREE.InstancedMesh(foliageGeo, foliageMat, treeCount);
+const treeData = []; // Store tree state (position, active)
 
 const _dummyObj = new THREE.Object3D();
 const _p = new THREE.Vector3();
@@ -229,13 +230,126 @@ for (let i = 0; i < treeCount; i++) {
     
     trunkMesh.setMatrixAt(i, _dummyObj.matrix);
     foliageMesh.setMatrixAt(i, _dummyObj.matrix);
+    
+    treeData.push({
+        index: i,
+        position: _p.clone(),
+        active: true
+    });
 }
 scene.add(trunkMesh);
 scene.add(foliageMesh);
 
 // --- Procedural Environment (Cottages) ---
 const cottages = [];
+const spawnedTrees = [];
 let destroyedHousesCount = 0;
+
+function destroySpawnedTree(index) {
+    if (index < 0 || index >= spawnedTrees.length) return;
+    const treeGroup = spawnedTrees[index];
+    
+    // Calculate position for mushroom spawn before removing
+    const pos = treeGroup.position.clone();
+    
+    // Remove from scene and array
+    scene.remove(treeGroup);
+    spawnedTrees.splice(index, 1);
+    
+    // Spawn 5 mushrooms with explosion physics (logic copied from destroyTree)
+    for (let k = 0; k < 5; k++) {
+        // Spawn slightly above base
+        const spawnPos = pos.clone().add(new THREE.Vector3(0, 0, 0)); // Start at base
+        spawnPos.y += 1.0;
+        
+        const localUp = new THREE.Vector3(0, 1, 0);
+        
+        // Small random spread (approx 1m radius)
+        const randDir = new THREE.Vector3(Math.random()-0.5, 0, Math.random()-0.5).normalize();
+        const spread = Math.random() * 1.5; 
+        
+        // Initial upward velocity + some spread
+        const velocity = localUp.clone().multiplyScalar(2 + Math.random() * 3); // Up 2-5
+        velocity.add(randDir.multiplyScalar(spread)); // Outward spread
+
+        const spawnQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), localUp);
+        
+        createMushroom(spawnPos, spawnQuat, velocity);
+    }
+}
+
+function destroyTree(index) {
+    if (index < 0 || index >= treeData.length) return;
+    const tree = treeData[index];
+    if (!tree.active) return;
+    
+    tree.active = false;
+    
+    // Hide the tree by scaling it to zero
+    const dummy = new THREE.Object3D();
+    dummy.scale.set(0, 0, 0);
+    dummy.updateMatrix();
+    
+    trunkMesh.setMatrixAt(index, dummy.matrix);
+    foliageMesh.setMatrixAt(index, dummy.matrix);
+    trunkMesh.instanceMatrix.needsUpdate = true;
+    foliageMesh.instanceMatrix.needsUpdate = true;
+    
+    // Spawn 5 mushrooms with explosion physics
+    for (let k = 0; k < 5; k++) {
+        // Spawn slightly above the tree's base
+        const spawnPos = tree.position.clone().normalize().multiplyScalar(WORLD_RADIUS + 1.0);
+        
+        // Simpler falling physics (drop near base)
+        const localUp = tree.position.clone().normalize();
+        
+        // Small random spread (approx 1m radius)
+        const randDir = new THREE.Vector3(Math.random()-0.5, 0, Math.random()-0.5).normalize();
+        const spread = Math.random() * 1.5; 
+        
+        // Initial upward velocity + some spread
+        const velocity = localUp.clone().multiplyScalar(2 + Math.random() * 3); // Up 2-5
+        velocity.add(randDir.multiplyScalar(spread)); // Outward spread
+
+        const spawnQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), localUp);
+        
+        createMushroom(spawnPos, spawnQuat, velocity);
+    }
+}
+
+function destroyCottage(index) {
+    if (index < 0 || index >= cottages.length) return;
+    
+    const cottageGroup = cottages[index];
+    const center = cottageGroup.position.clone();
+    const quat = cottageGroup.quaternion.clone();
+    
+    scene.remove(cottageGroup);
+    cottages.splice(index, 1);
+    
+    // Spawn trees in place of the house
+    for (let k = 0; k < 15; k++) {
+        const offset = new THREE.Vector3(
+            (Math.random() - 0.5) * 8, 0, (Math.random() - 0.5) * 8
+        );
+        offset.applyQuaternion(quat);
+        const spawnPos = center.clone().add(offset);
+        spawnPos.normalize().multiplyScalar(WORLD_RADIUS);
+        const spawnQuat = new THREE.Quaternion().setFromUnitVectors(
+            new THREE.Vector3(0, 1, 0), spawnPos.clone().normalize()
+        );
+        spawnTreeAt(spawnPos, spawnQuat);
+    }
+
+    destroyedHousesCount++;
+    
+    // Unlock Achievements
+    window.unlockAchievement(`house_${destroyedHousesCount}`);
+    
+    if (destroyedHousesCount === 5) {
+        window.unlockAchievement('anti_establishment');
+    }
+}
 
 function createCottage(pos, quat) {
     const group = new THREE.Group();
@@ -290,6 +404,7 @@ function spawnTreeAt(position, quaternion) {
     group.add(trunk);
     group.add(foliage);
     scene.add(group);
+    spawnedTrees.push(group);
     
     let s = 0;
     const animatePop = () => {
@@ -313,6 +428,54 @@ function createMushroom(pos, quat) {
     const group = new THREE.Group();
     group.position.copy(pos);
     group.quaternion.copy(quat);
+
+    // Stem
+    const stem = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.1, 0.15, 0.4, 8),
+        new THREE.MeshStandardMaterial({ color: 0xF5F5DC, roughness: 0.8 })
+    );
+    stem.position.y = 0.2;
+    group.add(stem);
+
+    // Cap
+    const cap = new THREE.Mesh(
+        new THREE.SphereGeometry(0.3, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+        new THREE.MeshStandardMaterial({ color: 0xFF0000, roughness: 0.5 })
+    );
+    cap.position.y = 0.4;
+    // Add white spots to cap
+    const spotGeo = new THREE.CircleGeometry(0.05, 6);
+    const spotMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+    
+    for(let i=0; i<5; i++) {
+        const spot = new THREE.Mesh(spotGeo, spotMat);
+        spot.position.set(
+            (Math.random()-0.5)*0.4,
+            0.15 + Math.random()*0.1,
+            (Math.random()-0.5)*0.4
+        );
+        spot.lookAt(0, 10, 0); // Look up roughly
+        spot.rotation.x = -Math.PI/2;
+        cap.add(spot);
+    }
+
+    group.add(cap);
+    
+    // Random scale
+    group.scale.setScalar(0.8 + Math.random() * 0.5);
+    
+    mushroomGroup.add(group);
+    mushrooms.push(group);
+}
+
+function createMushroom(pos, quat, velocity = null) {
+    const group = new THREE.Group();
+    group.position.copy(pos);
+    group.quaternion.copy(quat);
+    
+    // Physics
+    group.userData.velocity = velocity ? velocity.clone() : new THREE.Vector3();
+    group.userData.isFalling = !!velocity;
 
     // Stem
     const stem = new THREE.Mesh(
@@ -436,6 +599,67 @@ const handPosRight = new THREE.Vector2(0.3, -0.3);
 const lastHandPosLeft = new THREE.Vector2(-0.3, -0.3);
 const lastHandPosRight = new THREE.Vector2(0.3, -0.3);
 
+// --- Confetti System ---
+const confettiCount = 0;
+const confettiParticles = [];
+const confettiGroup = new THREE.Group();
+scene.add(confettiGroup);
+
+const confettiGeo = new THREE.PlaneGeometry(0.05, 0.05);
+const confettiColors = [0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0xFF00FF, 0x00FFFF, 0xFFFFFF];
+
+function createConfettiParticle(pos) {
+    const color = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+    const material = new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide });
+    const mesh = new THREE.Mesh(confettiGeo, material);
+    
+    mesh.position.copy(pos);
+    mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+    
+    const velocity = new THREE.Vector3(
+        (Math.random() - 0.5) * 5,
+        2 + Math.random() * 3,
+        (Math.random() - 0.5) * 5
+    );
+    
+    confettiGroup.add(mesh);
+    confettiParticles.push({ mesh, velocity, life: 3.0 });
+}
+
+function updateConfetti(delta) {
+    for (let i = confettiParticles.length - 1; i >= 0; i--) {
+        const p = confettiParticles[i];
+        p.life -= delta;
+        
+        if (p.life <= 0) {
+            confettiGroup.remove(p.mesh);
+            confettiParticles.splice(i, 1);
+            continue;
+        }
+        
+        // Physics
+        p.velocity.y -= 9.8 * delta; // Gravity
+        p.velocity.x *= 0.98; // Air resistance
+        p.velocity.z *= 0.98;
+        
+        p.mesh.position.add(p.velocity.clone().multiplyScalar(delta));
+        p.mesh.rotation.x += delta * 5;
+        p.mesh.rotation.y += delta * 3;
+        
+        // Ground collision (simple fade/remove)
+        if (p.mesh.position.length() < WORLD_RADIUS) {
+            confettiGroup.remove(p.mesh);
+            confettiParticles.splice(i, 1);
+        }
+    }
+}
+
+// Jump Physics Variables
+let verticalVelocity = 0;
+let playerJumpHeight = 0;
+const GRAVITY = 20.0;
+const JUMP_FORCE = 8.0;
+
 document.body.addEventListener('click', () => {
     if (!window.isLocked) {
         document.body.requestPointerLock();
@@ -454,19 +678,50 @@ document.addEventListener('pointerlockchange', () => {
 
 document.addEventListener('keydown', (e) => {
     switch (e.code) {
-        case 'KeyW': window.moveState.forward = true; break;
-        case 'KeyA': window.moveState.left = true; break;
-        case 'KeyS': window.moveState.backward = true; break;
-        case 'KeyD': window.moveState.right = true; break;
+        case 'KeyW': 
+        case 'ArrowUp':
+            window.moveState.forward = true; 
+            if (window.TipManager) window.TipManager.onInput('move');
+            break;
+        case 'KeyA': 
+        case 'ArrowLeft':
+            window.moveState.left = true; 
+            break;
+        case 'KeyS': 
+        case 'ArrowDown':
+            window.moveState.backward = true; 
+            break;
+        case 'KeyD': 
+        case 'ArrowRight':
+            window.moveState.right = true; 
+            break;
+        case 'Space':
+            if (playerJumpHeight <= 0.01) { // Ground check
+                verticalVelocity = JUMP_FORCE;
+                if (window.incrementJumpCount) window.incrementJumpCount();
+            }
+            break;
     }
 });
 
 document.addEventListener('keyup', (e) => {
     switch (e.code) {
-        case 'KeyW': window.moveState.forward = false; break;
-        case 'KeyA': window.moveState.left = false; break;
-        case 'KeyS': window.moveState.backward = false; break;
-        case 'KeyD': window.moveState.right = false; break;
+        case 'KeyW': 
+        case 'ArrowUp':
+            window.moveState.forward = false; 
+            break;
+        case 'KeyA': 
+        case 'ArrowLeft':
+            window.moveState.left = false; 
+            break;
+        case 'KeyS': 
+        case 'ArrowDown':
+            window.moveState.backward = false; 
+            break;
+        case 'KeyD': 
+        case 'ArrowRight':
+            window.moveState.right = false; 
+            break;
     }
 });
 
@@ -478,6 +733,8 @@ document.addEventListener('mousedown', (e) => {
         handPosLeft.set(-0.3, -0.3);
         lastHandPosLeft.copy(handPosLeft);
         
+        if (isRightClick && window.TipManager) window.TipManager.onInput('both_buttons');
+
         // --- House Destruction Logic ---
         // --- House Destruction Logic ---
         raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
@@ -495,43 +752,51 @@ document.addEventListener('mousedown', (e) => {
             }
 
             if (hitDoor) {
-                const center = cottageGroup.position.clone();
-                const quat = cottageGroup.quaternion.clone();
-                scene.remove(cottageGroup);
-                cottages.splice(i, 1);
-                
-                // Spawn trees in place of the house
-                for (let k = 0; k < 15; k++) {
-                    const offset = new THREE.Vector3(
-                        (Math.random() - 0.5) * 8, 0, (Math.random() - 0.5) * 8
-                    );
-                    offset.applyQuaternion(quat);
-                    const spawnPos = center.clone().add(offset);
-                    spawnPos.normalize().multiplyScalar(WORLD_RADIUS);
-                    const spawnQuat = new THREE.Quaternion().setFromUnitVectors(
-                        new THREE.Vector3(0, 1, 0), spawnPos.clone().normalize()
-                    );
-                    spawnTreeAt(spawnPos, spawnQuat);
-                }
-
-                destroyedHousesCount++;
-                
-                // Unlock Achievements
-                window.unlockAchievement(`house_${destroyedHousesCount}`);
-                
-                if (destroyedHousesCount === 5) {
-                    window.unlockAchievement('anti_establishment');
-                }
-                
-                break; // Stop checking other cottages if we hit one
+                destroyCottage(i);
+                break; 
             }
         }
+        
+        // --- Tree Click Destruction ---
+        // Allow clicking anywhere on the tree to destroy it
+        const treeIntersects = raycaster.intersectObjects([trunkMesh, foliageMesh]);
+        if (treeIntersects.length > 0) {
+            const hit = treeIntersects[0];
+            const instanceId = hit.instanceId;
+            
+            if (instanceId !== undefined && instanceId < treeData.length) {
+                const tree = treeData[instanceId];
+                if (tree.active) {
+                    const dist = playerGroup.position.distanceTo(tree.position);
+                    if (dist < 3.5) { // Require close proximity (similar to touch-grass radius)
+                        destroyTree(instanceId);
+                    }
+                }
+            }
+        }
+        
+        // --- Spawned Tree Click Destruction ---
+        // Iterate backwards since we might modify the array
+        for (let i = spawnedTrees.length - 1; i >= 0; i--) {
+            const treeGroup = spawnedTrees[i];
+            const intersects = raycaster.intersectObjects(treeGroup.children);
+            if (intersects.length > 0) {
+                const dist = playerGroup.position.distanceTo(treeGroup.position);
+                if (dist < 5.0) { // Interaction radius
+                    destroySpawnedTree(i);
+                    break;
+                }
+            }
+        }
+
         
     } else if (e.button === 2) {
         isRightClick = true;
         handRight.classList.add('active');
         handPosRight.set(0.3, -0.3);
         lastHandPosRight.copy(handPosRight);
+
+        if (isLeftClick && window.TipManager) window.TipManager.onInput('both_buttons');
     }
 });
 
@@ -615,8 +880,21 @@ function animate() {
 
     if (window.isLocked) {
         // --- Movement Logic ---
-        const moveSpeed = MOVEMENT_SPEED * delta;
+        const speedMult = window.getSpeedMultiplier ? window.getSpeedMultiplier() : 1.0;
+        const moveSpeed = MOVEMENT_SPEED * speedMult * delta;
         
+        // Update Boost Logic
+        if (window.updateBoostState) window.updateBoostState();
+        
+        // --- Jump Physics ---
+        verticalVelocity -= GRAVITY * delta;
+        playerJumpHeight += verticalVelocity * delta;
+        
+        if (playerJumpHeight < 0) {
+            playerJumpHeight = 0;
+            verticalVelocity = 0;
+        }
+
         const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(playerGroup.quaternion);
         const right = new THREE.Vector3(1, 0, 0).applyQuaternion(playerGroup.quaternion);
         const normal = playerGroup.position.clone().normalize();
@@ -627,19 +905,56 @@ function animate() {
         const moveDir = new THREE.Vector3();
         if (window.moveState.forward) moveDir.add(forward);
         if (window.moveState.backward) moveDir.sub(forward);
-        if (window.moveState.right) moveDir.add(right);
-        if (window.moveState.left) moveDir.sub(right);
+
+        // Turn Logic (A/D)
+        const ROTATION_SPEED = 2.0;
+        if (window.moveState.left) playerGroup.rotateY(ROTATION_SPEED * delta);
+        if (window.moveState.right) playerGroup.rotateY(-ROTATION_SPEED * delta);
         
         if (moveDir.lengthSq() > 0) {
             moveDir.normalize().multiplyScalar(moveSpeed);
-            const newPos = playerGroup.position.clone().add(moveDir);
-            newPos.normalize().multiplyScalar(WORLD_RADIUS);
+            
+            // We calculate horizontal movement first
+            const horizPos = playerGroup.position.clone().add(moveDir);
+            
+            // Project onto the sphere surface (radius) THEN add jump height
+            horizPos.normalize().multiplyScalar(WORLD_RADIUS + playerJumpHeight);
+            
+            const newPos = horizPos;
             
             let collision = false;
             if (cottages.length > 0) {
-                for (let cottage of cottages) {
+                // Iterate backwards to safely remove items if needed
+                for (let i = cottages.length - 1; i >= 0; i--) {
+                    const cottage = cottages[i];
                     const distToCottage = newPos.distanceTo(cottage.position);
+                    
                     if (distToCottage < 4.0) {
+                        collision = true;
+                    }
+                }
+            }
+            
+            // Tree Collision
+            if (!collision) {
+                for (let i = 0; i < treeData.length; i++) {
+                    const tree = treeData[i];
+                    if (!tree.active) continue;
+                    
+                    const distToTree = newPos.distanceTo(tree.position);
+                    if (distToTree < 1.0) {
+                        collision = true;
+                        break;
+                    }
+                }
+            }
+            
+            // Spawned Tree Collision
+            if (!collision) {
+                for (let i = 0; i < spawnedTrees.length; i++) {
+                    const tree = spawnedTrees[i];
+                    const distToTree = newPos.distanceTo(tree.position);
+                    if (distToTree < 1.0) {
                         collision = true;
                         break;
                     }
@@ -647,8 +962,49 @@ function animate() {
             }
             
             if (!collision) playerGroup.position.copy(newPos);
+        } else {
+             // Even if not moving horizontally, we must update vertical position (for jump in place)
+             const currentPos = playerGroup.position.clone();
+             currentPos.normalize().multiplyScalar(WORLD_RADIUS + playerJumpHeight);
+             playerGroup.position.copy(currentPos);
         }
         
+        // --- Stationary Destruction Logic ---
+        // Check for destruction even if not moving, as long as "touching grass"
+        if (window.isLocked) {
+             // House Destruction
+             if (cottages.length > 0 && (lastHand1Touching || lastHand2Touching)) {
+                for (let i = cottages.length - 1; i >= 0; i--) {
+                    const cottage = cottages[i];
+                    const distToCottage = playerGroup.position.distanceTo(cottage.position);
+                    if (distToCottage < 5.0) { // Slightly generous radius
+                        destroyCottage(i);
+                    }
+                }
+            }
+            
+            // Tree Destruction
+            if (treeData.length > 0 && (lastHand1Touching || lastHand2Touching)) {
+                 for (let i = 0; i < treeData.length; i++) {
+                    const tree = treeData[i];
+                    if (!tree.active) continue;
+                    const distToTree = playerGroup.position.distanceTo(tree.position);
+                    if (distToTree < 3.5) { // Increased tolerance
+                        destroyTree(i);
+                    }
+                 }
+                 
+                 // Spawned Trees Destruction (Walk-into)
+                 for (let i = spawnedTrees.length - 1; i >= 0; i--) {
+                     const tree = spawnedTrees[i];
+                     const distToTree = playerGroup.position.distanceTo(tree.position);
+                     if (distToTree < 3.5) {
+                         destroySpawnedTree(i);
+                     }
+                 }
+            }
+        }
+
         // Joystick Turning
         if (window.isTouchDevice && window.joystickActive && Math.abs(window.joystickDirection.x) > 0.3) {
             const turnSpeed = 2.0 * delta;
@@ -769,15 +1125,54 @@ function animate() {
         spawnMushroom();
     }
 
-    // Check collection
+    // Mushroom Physics & Collection
     for (let i = mushrooms.length - 1; i >= 0; i--) {
         const m = mushrooms[i];
+        
+        // Physics
+        if (m.userData.isFalling) {
+            const vel = m.userData.velocity;
+            
+            // Gravity (towards center of world)
+            const gravityDir = m.position.clone().normalize().negate();
+            vel.add(gravityDir.multiplyScalar(9.8 * delta));
+            
+            // Move
+            m.position.add(vel.clone().multiplyScalar(delta));
+            
+            // Ground Collision
+            const distFromCenter = m.position.length();
+            if (distFromCenter < WORLD_RADIUS) {
+                // Landed!
+                m.position.normalize().multiplyScalar(WORLD_RADIUS);
+                m.userData.isFalling = false;
+                
+                // Re-orient to stand up on the sphere
+                const up = m.position.clone().normalize();
+                m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), up);
+            }
+        }
+
+        // Collection (check both while falling and landed)
         if (playerGroup.position.distanceTo(m.position) < 2.0) {
             mushroomGroup.remove(m);
             mushrooms.splice(i, 1);
             window.collectMushroom();
         }
     }
+
+    // Confetti Logic
+    if (window.confettiActive) {
+        if (hand1Touching) {
+            const spawnPos = grassMaterial.uniforms.hand1Pos.value.clone().add(new THREE.Vector3(0, 0.5, 0));
+            createConfettiParticle(spawnPos);
+        }
+        if (hand2Touching) {
+            const spawnPos = grassMaterial.uniforms.hand2Pos.value.clone().add(new THREE.Vector3(0, 0.5, 0));
+            createConfettiParticle(spawnPos);
+        }
+    }
+    updateConfetti(delta);
 
     renderer.render(scene, camera);
 }

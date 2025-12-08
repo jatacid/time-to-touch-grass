@@ -22,6 +22,12 @@ window.joystickTouchId = joystickTouchId;
 let totalDistance = 0;
 let grassTapCount = 0;
 let mushroomCount = 0;
+let totalCollectedMushrooms = 0;
+let jumpCount = 0;
+let boostActive = false;
+let boostEndTime = 0;
+let boostDuration = 0;
+let currentSpeedMultiplier = 1.0;
 const achievements = [
     { id: 'first_touch', name: 'First Touch', description: 'Touched grass for the first time', threshold: 0.1, unlocked: false },
     { id: 'tap_master', name: 'Not into stroking grass', description: 'Tapped grass 5 times', threshold: 5, type: 'taps', unlocked: false },
@@ -60,14 +66,28 @@ const achievements = [
     { id: 'forager', name: 'Forager', description: 'Collected 1 mushroom', threshold: 1, type: 'mushroom', unlocked: false },
     { id: 'mycologist', name: 'Mycologist', description: 'Collected 10 mushrooms', threshold: 10, type: 'mushroom', unlocked: false },
     { id: 'psychonaut', name: 'Psychonaut', description: 'Collected 50 mushrooms', threshold: 50, type: 'mushroom', unlocked: false },
-    { id: 'enlightened', name: 'Enlightened', description: 'Collected 100 mushrooms', threshold: 100, type: 'mushroom', unlocked: false }
+    { id: 'enlightened', name: 'Enlightened', description: 'Collected 100 mushrooms', threshold: 100, type: 'mushroom', unlocked: false },
+    { id: 'fungus_among_us', name: 'Fungus Among Us', description: 'Collected 200 mushrooms', threshold: 200, type: 'mushroom', unlocked: false },
+    { id: 'mycelium_network', name: 'Mycelium Network', description: 'Collected 500 mushrooms', threshold: 500, type: 'mushroom', unlocked: false },
+    { id: 'leap_of_faith', name: 'Leap of Faith', description: 'Jumped for the first time', threshold: 1, type: 'jump', unlocked: false },
+    { id: 'grasshopper', name: 'Grasshopper', description: 'Jumped 50 times', threshold: 50, type: 'jump', unlocked: false },
+    { id: 'moon_walker', name: 'Moon Walker', description: 'Jumped 100 times', threshold: 100, type: 'jump', unlocked: false },
+    { id: 'orbital', name: 'Orbital', description: 'Jumped 500 times', threshold: 500, type: 'jump', unlocked: false },
+    { id: 'fast_lane', name: 'Fast Lane', description: 'Reached 1.5x speed', threshold: 1.5, type: 'speed', unlocked: false },
+    { id: 'supersonic', name: 'Supersonic', description: 'Reached 2.0x speed', threshold: 2.0, type: 'speed', unlocked: false },
+    { id: 'warp_speed', name: 'Warp Speed', description: 'Reached 3.0x speed', threshold: 3.0, type: 'speed', unlocked: false },
+    { id: 'completionist', name: 'Really Needs to Step Outside', description: 'Completed all achievements', threshold: 1, type: 'special', unlocked: false, special: 'legendary' }
 ];
+
+let confettiActive = false;
+window.confettiActive = false;
 
 // --- UI Elements ---
 const scoreValue = document.getElementById('score-value');
 const progressBarFill = document.getElementById('progress-bar-fill');
 const nextAchievementName = document.getElementById('next-achievement-name');
 const achievementsList = document.getElementById('achievements-list');
+const achievementCounter = document.getElementById('achievement-counter');
 const instructions = document.getElementById('instructions');
 const crosshair = document.getElementById('crosshair');
 const mobilePauseBtn = document.getElementById('mobile-pause-btn');
@@ -79,7 +99,11 @@ const handLeft = document.getElementById('hand-left');
 const handRight = document.getElementById('hand-right');
 const mushroomCountDisplay = document.getElementById('mushroom-count');
 const useMushroomsBtn = document.getElementById('use-mushrooms-btn');
-const meditationOverlay = document.getElementById('meditation-overlay');
+const mushroomScoreContainer = document.getElementById('mushroom-score-container');
+const boostTimerContainer = document.getElementById('boost-timer-container');
+const boostTimerValue = document.getElementById('boost-timer-value');
+const boostMultiplierValue = document.getElementById('boost-multiplier-value');
+// medidationOverlay removed
 
 // --- Functions ---
 
@@ -114,6 +138,10 @@ function setIsLocked(locked) {
         handLeft.classList.remove('active');
         handRight.classList.remove('active');
     }
+    
+    if (locked && window.TipManager) {
+        window.TipManager.onStart();
+    }
 }
 
 function updateGamification(playerDist, isTouchingGrass) {
@@ -124,6 +152,10 @@ function updateGamification(playerDist, isTouchingGrass) {
     resetHandMovement();
 
     if (totalFrameDist > 0 && isTouchingGrass) {
+        if (window.TipManager) {
+            window.TipManager.onInput('touch');
+            if (playerDist > 0) window.TipManager.onInput('move_touch');
+        }
         totalDistance += totalFrameDist;
         scoreValue.textContent = Math.floor(totalDistance) + 'm';
 
@@ -168,11 +200,12 @@ function incrementGrassTaps() {
 
 function collectMushroom() {
     mushroomCount++;
+    totalCollectedMushrooms++;
     mushroomCountDisplay.textContent = mushroomCount;
     
     // Check achievements
     achievements.filter(a => a.type === 'mushroom' && !a.unlocked).forEach(ach => {
-        if (mushroomCount >= ach.threshold) {
+        if (totalCollectedMushrooms >= ach.threshold) {
             ach.unlocked = true;
             addAchievementToUI(ach);
         }
@@ -183,35 +216,117 @@ function collectMushroom() {
     }
 }
 
-function useMushrooms() {
-    meditationOverlay.style.display = 'flex';
-    meditationOverlay.style.opacity = 0;
+function activateSpeedBoost() {
+    if (mushroomCount <= 0) return;
+
+    // Calculate boost parameters with diminishing returns
+    const cappedCount = Math.min(mushroomCount, 10);
+    const excessCount = Math.max(0, mushroomCount - 10);
+
+    // Initial: 1s per mushroom. Excess: 0.05s (1/20th) per mushroom.
+    let duration = (cappedCount * 1.0) + (excessCount * 0.05);
     
-    // Fade in
-    let opacity = 0;
-    const fadeIn = setInterval(() => {
-        opacity += 0.05;
-        meditationOverlay.style.opacity = opacity;
-        if (opacity >= 1) clearInterval(fadeIn);
-    }, 50);
+    // Initial: +0.1x per mushroom. Excess: +0.005x (1/20th) per mushroom.
+    const multiplier = 1.0 + (cappedCount * 0.1) + (excessCount * 0.005);
 
-    setTimeout(() => {
-        // Reset logic
-        mushroomCount = 0;
-        mushroomCountDisplay.textContent = 0;
-        useMushroomsBtn.style.display = 'none';
-        if (window.resetMushrooms) window.resetMushrooms();
+    // Hard cap duration at 10 seconds
+    duration = Math.min(duration, 10.0);
 
-        // Fade out
-        const fadeOut = setInterval(() => {
-            opacity -= 0.05;
-            meditationOverlay.style.opacity = opacity;
-            if (opacity <= 0) {
-                clearInterval(fadeOut);
-                meditationOverlay.style.display = 'none';
+    boostDuration = duration;
+    boostEndTime = performance.now() / 1000 + boostDuration;
+    currentSpeedMultiplier = multiplier;
+    boostActive = true;
+
+    // Reset mushrooms but keep track for boost
+    const countUsed = mushroomCount;
+    mushroomCount = 0;
+    mushroomCountDisplay.textContent = 0;
+    useMushroomsBtn.style.display = 'none';
+
+    // UI Updates
+    if (mushroomScoreContainer) mushroomScoreContainer.style.display = 'none';
+    if (boostTimerContainer) boostTimerContainer.style.display = 'flex';
+    
+    if (boostMultiplierValue) boostMultiplierValue.textContent = multiplier.toFixed(1) + "x Speed";
+    if (boostTimerValue) boostTimerValue.textContent = boostDuration.toFixed(1) + "s";
+    if (boostTimerValue) boostTimerValue.style.color = "#fff"; // Reset color
+    
+    console.log(`Boost activated! Count: ${countUsed}, Duration: ${boostDuration}s, Multiplier: ${multiplier}x`);
+
+    // Check Speed Achievements
+    achievements.filter(a => a.type === 'speed' && !a.unlocked).forEach(ach => {
+        if (multiplier >= ach.threshold) {
+            ach.unlocked = true;
+            addAchievementToUI(ach);
+        }
+    });
+    
+    // Clear mushrooms from world
+    if (window.resetMushrooms) window.resetMushrooms();
+}
+
+function updateBoostState() {
+    if (!boostActive) return;
+
+    const now = performance.now() / 1000;
+    const remaining = boostEndTime - now;
+
+    if (remaining <= 0) {
+        // Boost Over
+        boostActive = false;
+        currentSpeedMultiplier = 1.0;
+        
+        // UI Reset
+        mushroomScoreContainer.style.display = 'flex';
+        boostTimerContainer.style.display = 'none';
+    } else {
+        // Update Progress
+        if (boostTimerValue) {
+            boostTimerValue.textContent = remaining.toFixed(1) + "s";
+            // Flash red when low
+            if (remaining < 3.0) {
+                const isRed = Math.floor(now * 4) % 2 === 0;
+                boostTimerValue.style.color = isRed ? "#ff0000" : "#fff";
             }
-        }, 50);
-    }, 3000);
+        }
+    }
+}
+
+function getSpeedMultiplier() {
+    return currentSpeedMultiplier;
+}
+
+function incrementJumpCount() {
+    jumpCount++;
+    const jumpAch = achievements.filter(a => a.type === 'jump' && !a.unlocked);
+    jumpAch.forEach(ach => {
+        if (jumpCount >= ach.threshold) {
+            ach.unlocked = true;
+            addAchievementToUI(ach);
+        }
+    });
+}
+
+function updateAchievementCounter() {
+    const unlockedCount = achievements.filter(a => a.unlocked).length;
+    const totalCount = achievements.length;
+    
+    if (achievementCounter) {
+        achievementCounter.textContent = `${unlockedCount} of ${totalCount} Achievements`;
+    }
+}
+
+function checkCompletionist() {
+    const allRegularUnlocked = achievements.every(a => a.id === 'completionist' || a.unlocked);
+    if (allRegularUnlocked) {
+        const completionistAch = achievements.find(a => a.id === 'completionist');
+        if (completionistAch && !completionistAch.unlocked) {
+            completionistAch.unlocked = true;
+            addAchievementToUI(completionistAch);
+            confettiActive = true;
+            window.confettiActive = true; // Sync global
+        }
+    }
 }
 
 function unlockAchievement(id) {
@@ -238,6 +353,9 @@ function addAchievementToUI(achievement) {
     
     // Auto-scroll to top
     achievementsList.scrollTop = 0;
+    
+    updateAchievementCounter();
+    checkCompletionist();
 }
 
 function initUI() {
@@ -247,6 +365,8 @@ function initUI() {
         joystickContainer.style.display = 'block';
         mobilePauseBtn.style.display = 'flex';
     }
+    
+    updateAchievementCounter();
 
     // Share Button
     shareBtn.addEventListener('click', async () => {
@@ -330,6 +450,10 @@ function initUI() {
                     moveState.backward = joystickDirection.y > threshold;
                     moveState.left = false;
                     moveState.right = false;
+
+                    // Tip Hook
+                    if (window.TipManager && moveState.forward) window.TipManager.onInput('move'); // Only count forward movement as intentional 'moving' for tip purposes? Or any movement. Prompt says "Try walking forward". Assuming any movement is fine to clear "hasMoved".
+                    if (window.TipManager && (moveState.forward || moveState.backward || moveState.left || moveState.right)) window.TipManager.onInput('move');
                 } else {
                     joystickDirection.set(0, 0);
                     moveState.forward = false;
@@ -442,18 +566,108 @@ window.checkFirstTouch = checkFirstTouch;
 window.incrementGrassTaps = incrementGrassTaps;
 window.unlockAchievement = unlockAchievement;
 window.collectMushroom = collectMushroom;
+window.updateBoostState = updateBoostState;
+window.getSpeedMultiplier = getSpeedMultiplier;
+window.incrementJumpCount = incrementJumpCount;
 window.initUI = initUI;
 
 // Event Listener for Button
 document.addEventListener('DOMContentLoaded', () => {
     if (useMushroomsBtn) {
-        useMushroomsBtn.addEventListener('click', useMushrooms);
+        useMushroomsBtn.addEventListener('click', activateSpeedBoost);
     }
 });
 
 // Key Listener for 'X'
 document.addEventListener('keydown', (e) => {
     if ((e.code === 'KeyX' || e.key === 'x') && mushroomCount >= 5) {
-        useMushrooms();
+        activateSpeedBoost();
     }
 });
+
+// --- Tip Manager ---
+const TipManager = {
+    activeTime: 0, // ms
+    hasMoved: false,
+    hasTouchedGrass: false,
+    hasMovedAndTouched: false,
+    hasUsedBothButtons: false,
+    
+    // Time thresholds (ms)
+    walkDelay: 4000,
+    touchDelay: 12000,
+    moveTouchDelay: 20000,
+    bothButtonsDelay: 45000,
+    
+    tipsShown: new Set(),
+    currentTip: null,
+    
+    init() {
+        this.el = document.getElementById('tip-text');
+        // Check every second
+        setInterval(() => this.update(), 1000);
+    },
+    
+    onStart() {
+        // No-op now, just tracking active time
+    },
+    
+    onInput(type) {
+        if (type === 'move') this.hasMoved = true;
+        if (type === 'touch') this.hasTouchedGrass = true;
+        if (type === 'move_touch') this.hasMovedAndTouched = true;
+        if (type === 'both_buttons') this.hasUsedBothButtons = true;
+    },
+    
+    show(id, text, duration = 4000) {
+        if (this.tipsShown.has(id)) return;
+        if (this.currentTip) return; // One at a time
+        
+        this.tipsShown.add(id);
+        this.currentTip = id;
+        
+        this.el.textContent = text;
+        this.el.classList.add('visible');
+        
+        setTimeout(() => {
+            this.el.classList.remove('visible');
+            this.currentTip = null;
+        }, duration);
+    },
+    
+    update() {
+        if (!window.isLocked) return;
+        
+        this.activeTime += 1000;
+        const elapsed = this.activeTime;
+        
+        // 1. Walk Forward
+        if (elapsed > this.walkDelay && !this.hasMoved) {
+            this.show('walk', "Try walking forward using the 'up' arrow or the joystick");
+        }
+        
+        // 2. Touch Grass (Click & Drag)
+        if (elapsed > this.touchDelay && !this.hasTouchedGrass) {
+            this.show('touch', "Try clicking and dragging to touch the grass");
+        }
+        
+        // 3. Move and Touch
+        // If they have moved a bunch but haven't touched grass while moving
+        if (elapsed > this.moveTouchDelay && this.hasMoved && !this.hasMovedAndTouched) {
+            this.show('move_touch', "Try moving and touching the grass as you go");
+        }
+        
+        // 4. Both Buttons
+        if (elapsed > this.bothButtonsDelay && !this.hasUsedBothButtons) {
+            this.show('both_buttons', "You can use both left and right mouse buttons at the same time for maximum grass coverage");
+        }
+    }
+};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    TipManager.init();
+});
+
+// Expose checks
+window.TipManager = TipManager;

@@ -34,18 +34,27 @@
                 <div class="progress-bar-bg">
                     <div id="progress-bar-fill" style="width: 0%"></div>
                 </div>
+                <div id="achievement-counter" style="font-size: 14px; color: #eee; margin-top: 5px; text-align: left; opacity: 0.9;">
+                    0 of 0 Achievements
+                </div>
             </div>
             <div id="achievements-list">
                 <!-- Unlocked achievements will appear here -->
             </div>
 
             <div class="mushroom-container" style="margin-top: 15px;">
-                <div class="score-container">
+                <div class="score-container" id="mushroom-score-container">
                     <div class="trophy-icon">🍄</div>
                     <div>
                         <div class="score-label">Mushrooms</div>
                         <div id="mushroom-count">0</div>
                     </div>
+                </div>
+
+                <div id="boost-timer-container" style="display: none; flex-direction: column; align-items: center; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 10px; border: 2px solid #8A2BE2;">
+                    <div style="font-size: 14px; color: #ccc; text-transform: uppercase; letter-spacing: 1px;">Speed Boost</div>
+                    <div id="boost-timer-value" style="font-size: 32px; font-weight: bold; color: #fff; font-family: monospace;">0.0s</div>
+                    <div id="boost-multiplier-value" style="font-size: 16px; color: #8A2BE2; margin-top: 5px;">1.0x Speed</div>
                 </div>
             </div>
 
@@ -62,7 +71,8 @@
             <div class="controls-list">
                 <p><strong class="desktop-text">Click</strong><strong class="mobile-text">Tap</strong> to Start</p>
 
-                <p class="desktop-text"><strong>WASD</strong> to Move</p>
+                <p class="desktop-text"><strong>WASD / Arrows</strong> to Move</p>
+                <p class="desktop-text"><strong>Space</strong> to Jump</p>
                 <p class="mobile-text"><strong>Joystick</strong> to Move</p>
 
                 <p class="desktop-text"><strong>Mouse</strong> to Look</p>
@@ -96,6 +106,10 @@
                 <div class="joystick-arrow arrow-right"></div>
                 <div id="joystick-knob"></div>
             </div>
+        </div>
+        <!-- Tip Container -->
+        <div id="tip-container">
+            <span id="tip-text"></span>
         </div>
     </div>
 
