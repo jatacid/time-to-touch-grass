@@ -43,3 +43,4 @@ If you enjoyed touching grass virtually, consider supporting the developer:
 
 ## 🔗 Source
 [GitHub Repository](https://github.com/jatacid/time-to-touch-grass)
+
